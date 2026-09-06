@@ -1,0 +1,16 @@
+# The single source of truth for every metric. Nothing else computes these.
+- name: renewable_share
+  label: Renewable share of generation
+  definition: >
+    TODO
+  grain: hour
+  numerator_sql: |
+    TODO
+  denominator_sql: |
+    TODO
+  denominator_note: >
+    TODO. Say what the denominator excludes and why. Most metric disputes are
+    denominator disputes, so this field is required, not optional.
+  owner: Roshan Karkera
+  version: 1
+  last_changed: TODO

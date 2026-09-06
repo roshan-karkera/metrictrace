@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.DS_Store
+
+# data is derived or re-fetchable, never commit it
+data/*
+!data/.gitkeep
+!data/raw/.gitkeep
