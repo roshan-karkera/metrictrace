@@ -10,6 +10,7 @@ cannot smuggle in its own filtering logic and drift from what the file says.
 Run:
     python -m semantic.engine                       list metrics
     python -m semantic.engine renewable_share       compute it, daily
+    python -m semantic.engine total_generation day
 """
 
 from __future__ import annotations
@@ -22,6 +23,9 @@ import yaml
 
 DB_PATH = "data/warehouse.db"
 METRICS_FILE = "semantic/metrics.yaml"
+
+REQUIRED = ("name", "label", "definition", "grain", "unit", "numerator",
+            "owner", "version", "last_changed")
 
 
 @dataclass
@@ -45,19 +49,42 @@ class Metric:
 
 
 def load_metrics(path: str = METRICS_FILE) -> dict[str, Metric]:
-    with open(path, encoding="utf-8") as fh:
+    with open(path, encoding="utf-8-sig") as fh:
         raw = yaml.safe_load(fh)
-    out = {}
-    for d in raw:
-        d = dict(d)
-        out[d["name"]] = Metric(
-            name=d.pop("name"), label=d.pop("label"), definition=d.pop("definition"),
-            grain=d.pop("grain"), unit=d.pop("unit"), numerator=d.pop("numerator"),
-            owner=d.pop("owner"), version=d.pop("version"),
+
+    if not isinstance(raw, list):
+        raise ValueError(
+            f"{path} must be a list of metric definitions, got {type(raw).__name__}")
+
+    out: dict[str, Metric] = {}
+    for i, entry in enumerate(raw):
+        if not isinstance(entry, dict):
+            raise ValueError(f"{path}: entry {i} is not a mapping")
+        missing = [k for k in REQUIRED if k not in entry]
+        if missing:
+            raise ValueError(
+                f"{path}: entry {i} ({entry.get('name', 'unnamed')}) "
+                f"is missing required field(s): {', '.join(missing)}")
+
+        d = dict(entry)
+        name = d.pop("name")
+        if name in out:
+            raise ValueError(f"{path}: metric '{name}' is defined twice")
+
+        out[name] = Metric(
+            name=name,
+            label=d.pop("label"),
+            definition=d.pop("definition"),
+            grain=d.pop("grain"),
+            unit=d.pop("unit"),
+            numerator=d.pop("numerator"),
+            owner=d.pop("owner"),
+            version=d.pop("version"),
             last_changed=str(d.pop("last_changed")),
             denominator=d.pop("denominator", None),
             denominator_note=d.pop("denominator_note", ""),
-            extra=d)
+            extra=d,
+        )
     return out
 
 
@@ -81,8 +108,7 @@ def compute(con, metric: Metric, period: str = "day"):
     """Return rows of (period_start, value). period is 'hour', 'day' or 'month'."""
     if period not in {"hour", "day", "month"}:
         raise ValueError("period must be hour, day or month")
-    bucket = ("f.ts_utc" if period == "hour"
-              else f"date_trunc('{period}', f.ts_utc)")
+    bucket = "f.ts_utc" if period == "hour" else f"date_trunc('{period}', f.ts_utc)"
 
     num_where, num_params = _filter_sql(metric.numerator)
     sql = f"""
@@ -104,7 +130,7 @@ def compute(con, metric: Metric, period: str = "day"):
     rows = con.execute(sql, params).fetchall()
 
     if metric.is_ratio:
-        # A zero denominator is not zero share. It is an unanswerable question.
+        # A zero denominator is not a zero share. It is an unanswerable question.
         return [(r[0], (r[1] / r[2]) if r[2] else None) for r in rows]
     return [(r[0], r[1]) for r in rows]
 
