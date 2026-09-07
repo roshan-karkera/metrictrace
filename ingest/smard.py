@@ -27,11 +27,20 @@ RESOLUTION = "hour"
 # Fill these in from what you found in the network tab.
 # Keep it to two or three. More sources is not more impressive.
 FILTERS = {
-    "410": "total_consumption",
-    # "1223": "brown_coal",
-    # add the wind / solar codes you found
+    "410":  "total_consumption",
+    "1223": "brown_coal",
+    "1224": "nuclear",
+    "1225": "wind_offshore",
+    "1226": "hydro",
+    "1227": "other_conventional",
+    "1228": "other_renewable",
+    "4066": "biomass",
+    "4067": "wind_onshore",
+    "4068": "solar",
+    "4069": "hard_coal",
+    "4070": "pumped_storage",
+    "4071": "natural_gas",
 }
-
 RAW_DIR = Path("data/raw")
 DB_PATH = Path("data/warehouse.db")
 
