@@ -1,16 +1,42 @@
-# The single source of truth for every metric. Nothing else computes these.
+# The single source of truth for every metric in MetricTrace.
+#
+# Nothing outside semantic/engine.py may compute these. If a number appears on a
+# dashboard, in a report or in an agent answer, it came from here.
+#
+# Filters are declarative (category / series lists), not raw SQL, so a metric
+# cannot quietly acquire its own WHERE clause and drift from this file.
+
 - name: renewable_share
   label: Renewable share of generation
   definition: >
-    TODO
+    Share of total electricity generation in the DE market area produced by
+    renewable sources, per hour.
   grain: hour
-  numerator_sql: |
-    TODO
-  denominator_sql: |
-    TODO
+  unit: ratio
+  numerator:
+    categories: [renewable]
+  denominator:
+    categories: [renewable, conventional]
   denominator_note: >
-    TODO. Say what the denominator excludes and why. Most metric disputes are
-    denominator disputes, so this field is required, not optional.
-  owner: Roshan Karkera
+    Excludes pumped storage, which returns electricity generated earlier and
+    would be counted twice. Excludes total consumption, because this measures the
+    generation mix, not the consumption mix; those differ by imports and exports.
+    See docs/decisions/0002.
+  owner: Roshan Mohan Karkera
   version: 1
-  last_changed: TODO
+  last_changed: 2026-09-07
+
+- name: total_generation
+  label: Total electricity generation
+  definition: >
+    Sum of all generating series in the DE market area, per hour.
+  grain: hour
+  unit: unverified, see docs/decisions/0002
+  numerator:
+    categories: [renewable, conventional]
+  denominator_note: >
+    Not a ratio. Absolute figure, and its unit is not yet confirmed, so it must
+    not be labelled with one on any chart until 0002 is closed.
+  owner: Roshan Mohan Karkera
+  version: 1
+  last_changed: 2026-09-07
