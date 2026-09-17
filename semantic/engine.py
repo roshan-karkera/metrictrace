@@ -110,17 +110,24 @@ def compute(con, metric: Metric, period: str = "day"):
         raise ValueError("period must be hour, day or month")
     bucket = "f.ts_utc" if period == "hour" else f"date_trunc('{period}', f.ts_utc)"
 
+    # No ELSE 0. SUM over zero matching rows must return NULL, not 0, so that a
+    # period with nothing contributing is undefined rather than a confident zero.
+    # See INC-003: the first week of the warehouse held only the load series, and
+    # total_generation reported 0 for seven days while every check passed.
     num_where, num_params = _filter_sql(metric.numerator)
     sql = f"""
         SELECT {bucket} AS period_start,
-               SUM(CASE WHEN {num_where} THEN f.value ELSE 0 END) AS numerator
+               SUM(CASE WHEN {num_where} THEN f.value END) AS numerator,
+               count(DISTINCT CASE WHEN {num_where} THEN f.series_key END) AS num_series
     """
-    params = list(num_params)
+    params = list(num_params) + list(num_params)
 
     if metric.is_ratio:
         den_where, den_params = _filter_sql(metric.denominator)
-        sql += f", SUM(CASE WHEN {den_where} THEN f.value ELSE 0 END) AS denominator"
-        params += den_params
+        sql += f""",
+               SUM(CASE WHEN {den_where} THEN f.value END) AS denominator,
+               count(DISTINCT CASE WHEN {den_where} THEN f.series_key END) AS den_series"""
+        params += den_params + den_params
 
     sql += """
         FROM fact_series_hourly f
@@ -130,9 +137,18 @@ def compute(con, metric: Metric, period: str = "day"):
     rows = con.execute(sql, params).fetchall()
 
     if metric.is_ratio:
-        # A zero denominator is not a zero share. It is an unanswerable question.
-        return [(r[0], (r[1] / r[2]) if r[2] else None) for r in rows]
-    return [(r[0], r[1]) for r in rows]
+        # A zero or absent denominator is not a zero share. It is an unanswerable
+        # question. An absent numerator with a real denominator IS a true zero.
+        out = []
+        for period_start, num, _num_series, den, den_series in rows:
+            if den_series == 0 or not den:
+                out.append((period_start, None))
+            else:
+                out.append((period_start, (num or 0.0) / den))
+        return out
+
+    # Absolute figure. Nothing contributing means undefined, never zero.
+    return [(r[0], r[1] if r[2] else None) for r in rows]
 
 
 def describe(m: Metric) -> str:
@@ -168,7 +184,8 @@ if __name__ == "__main__":
     print()
     for period_start, value in compute(con, m, period):
         if value is None:
-            print(f"{period_start:%Y-%m-%d}  no denominator, undefined")
+            why = "no denominator" if m.is_ratio else "nothing contributing"
+            print(f"{period_start:%Y-%m-%d}  {why}, undefined")
         elif m.unit == "ratio":
             print(f"{period_start:%Y-%m-%d}  {value:6.1%}")
         else:

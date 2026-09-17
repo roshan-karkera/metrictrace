@@ -48,10 +48,10 @@ Thirteen series, hourly, DE market area. Filter codes are in `ingest/smard.py`.
 | Checks | `quality/checks.py` | Working. 4 checks, 40 results, 39 pass. |
 | Gate | `quality/gate.py` | Working. 12 series published, nuclear blocked, INC-002 auto opened. |
 | Dimensional | `models/dimensional.py` | Working. 16,296 fact rows, grain ok, nuclear HELD. |
-| Semantic | `semantic/metrics.yaml`, `engine.py` | Written, not yet run by the author at time of writing. |
-| Lineage | `models/lineage.py` | **Empty placeholder. Not built.** |
-| Dashboard | `app/dashboard.py` | **Empty placeholder. Not built.** |
-| Agent | `agent/` | **Empty. Not built.** |
+| Semantic | `semantic/metrics.yaml`, `engine.py` | Working. Ratio and absolute paths both run. INC-003 fixed here on 2026-09-13. |
+| Lineage | `models/lineage.py` | Working. 36 edges, 14 nodes, verify clean. Build with `python -m models.lineage` and no arguments. |
+| Dashboard | `app/dashboard.py` | Built. Trust panel above the numbers, definitions read live from `metrics.yaml`. |
+| Agent | `agent/` | Working. Five node graph, run end to end 2026-09-13. All three paths exercised. No eval set yet. |
 | Orchestration | `orchestration/dags/` | **Empty on purpose. Airflow comes last.** |
 
 Run order:
@@ -60,7 +60,9 @@ Run order:
     python -m models.clean
     python -m quality.gate            # must run before dimensional
     python -m models.dimensional
+    python -m models.lineage          # no arguments builds the lineage table
     python -m semantic.engine renewable_share day
+    python -m agent.graph "how much electricity was generated per day"
 
 ## The finding that defines the project
 
@@ -104,8 +106,10 @@ agent must check trust before attributing anything.
 6. **Only `semantic/engine.py` computes a metric.** Nothing else. Filters in
    `metrics.yaml` are declarative, never raw SQL, so a definition cannot acquire
    its own WHERE clause and drift.
-7. **A zero denominator returns undefined, not zero.** An unanswerable question
-   is not a zero.
+7. **Nothing contributing returns undefined, not zero.** A zero denominator is
+   not a zero share, and an aggregate over zero matching rows is not a zero
+   level. Never write `SUM(CASE WHEN ... THEN value ELSE 0 END)`: the `ELSE 0`
+   turns an absence into a confident number. See INC-003.
 8. **Thresholds are decisions.** Every one lives at the top of
    `quality/checks.py` with its reason written next to it. Changing one means
    changing the reason first, in the same commit.
@@ -125,32 +129,23 @@ agent must check trust before attributing anything.
 
 ## Next, in order
 
-1. **`models/lineage.py`.** Column level lineage recorded as a queryable table,
-   not a diagram. This is the prerequisite for change impact analysis and for the
-   agent's upstream check. Almost nobody builds it; it is the reason the other
-   pillars connect.
-2. **`app/dashboard.py`.** Streamlit. Every KPI tile shows its definition, owner
-   and version read from `metrics.yaml`, directly beneath the number. Plus a
-   contribution analysis view: pick a metric and two periods, see what drove the
-   change.
+1. **`agent/eval/`.** Golden set of twenty questions with known answers, several
+   over deliberately corrupted loads. Measure two things separately: does it give
+   the right answer, and does it correctly refuse on the broken ones. Track in
+   MLflow. This is the next thing to build; the graph now runs and has nothing
+   measuring it.
+2. **Fact level completeness check.** INC-003 was caught by eye, not by a
+   control. Assert that a period contains the expected number of series, and open
+   an incident when it does not. Every existing check looks at one series against
+   its own history and is structurally blind to a whole series being absent.
 3. **Process pillar software.** Ticket intake with a written triage rule. Change
-   management for metric definitions that runs impact analysis via the lineage
-   table before a change is allowed. BPMN models of the incident and change
-   processes in Camunda Modeler.
-4. **`agent/graph.py`.** A LangGraph agent answering one question well: why did
-   this metric move between period A and period B? Five steps, and the ordering
-   is the whole point:
-   1. check the quality log and incident log first, and stop if the data was not
-      trustworthy that week
-   2. attribute the change by dimension
-   3. check lineage for upstream changes
-   4. retrieve metric definitions and incident notes
-   5. answer with the query behind every claim, or decline below a confidence
-      threshold
-5. **`agent/eval/`.** Golden set of twenty known deltas, several caused
-   deliberately by corrupting a load. Measure two things separately: does it find
-   the right driver, and does it correctly refuse on the broken ones. Track in
-   MLflow.
+   management for metric definitions that runs impact analysis through the
+   lineage table before a change is allowed. BPMN models of the incident and
+   change processes in Camunda Modeler.
+4. **Contribution analysis in the dashboard.** Pick a metric and two periods, see
+   what drove the change. The lineage table and the semantic layer both exist now,
+   so this is assembly rather than design.
+5. **Airflow.** Still last, deliberately.
 
 ## Tone
 
