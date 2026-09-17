@@ -51,7 +51,8 @@ Thirteen series, hourly, DE market area. Filter codes are in `ingest/smard.py`.
 | Semantic | `semantic/metrics.yaml`, `engine.py` | Working. Ratio and absolute paths both run. INC-003 fixed here on 2026-09-13. |
 | Lineage | `models/lineage.py` | Working. 36 edges, 14 nodes, verify clean. Build with `python -m models.lineage` and no arguments. |
 | Dashboard | `app/dashboard.py` | Built. Trust panel above the numbers, definitions read live from `metrics.yaml`. |
-| Agent | `agent/` | Working. Five node graph, run end to end 2026-09-13. All three paths exercised. No eval set yet. |
+| Agent | `agent/` | Working. Five node graph, all three paths exercised. |
+| Evaluation | `agent/eval/` | Working. 20 cases over 5 warehouse fixtures. 20/20 on 2026-09-17, unsafe answer rate 0. Logged to MLflow. |
 | Orchestration | `orchestration/dags/` | **Empty on purpose. Airflow comes last.** |
 
 Run order:
@@ -63,6 +64,7 @@ Run order:
     python -m models.lineage          # no arguments builds the lineage table
     python -m semantic.engine renewable_share day
     python -m agent.graph "how much electricity was generated per day"
+    python -m agent.eval.run             # 20 case golden set, non zero exit on failure
 
 ## The finding that defines the project
 
@@ -114,7 +116,14 @@ agent must check trust before attributing anything.
    `quality/checks.py` with its reason written next to it. Changing one means
    changing the reason first, in the same commit.
 9. **Runbooks are written the first time a check fails**, not at the end.
-10. **No em dashes anywhere in this repository.**
+10. **Incident identifiers come from `next_incident_id`** and are never reused.
+    The `incident` table and `process/incidents.md` share one identifier space.
+    See INC-016.
+11. **Every module reads `DB_PATH` from `config.py`**, which honours the
+    `METRICTRACE_DB` environment variable. Only `agent/eval` sets it, so that
+    refusal behaviour can be measured against a fixture without touching the
+    real warehouse.
+12. **No em dashes anywhere in this repository.**
 
 ## Open items
 
@@ -129,23 +138,25 @@ agent must check trust before attributing anything.
 
 ## Next, in order
 
-1. **`agent/eval/`.** Golden set of twenty questions with known answers, several
-   over deliberately corrupted loads. Measure two things separately: does it give
-   the right answer, and does it correctly refuse on the broken ones. Track in
-   MLflow. This is the next thing to build; the graph now runs and has nothing
-   measuring it.
-2. **Fact level completeness check.** INC-003 was caught by eye, not by a
+1. **Fact level completeness check.** INC-003 was caught by eye, not by a
    control. Assert that a period contains the expected number of series, and open
    an incident when it does not. Every existing check looks at one series against
    its own history and is structurally blind to a whole series being absent.
-3. **Process pillar software.** Ticket intake with a written triage rule. Change
+2. **Process pillar software.** Ticket intake with a written triage rule. Change
    management for metric definitions that runs impact analysis through the
    lineage table before a change is allowed. BPMN models of the incident and
    change processes in Camunda Modeler.
-4. **Contribution analysis in the dashboard.** Pick a metric and two periods, see
+3. **Contribution analysis in the dashboard.** Pick a metric and two periods, see
    what drove the change. The lineage table and the semantic layer both exist now,
    so this is assembly rather than design.
-5. **Airflow.** Still last, deliberately.
+4. **Airflow.** Still last, deliberately.
+
+5. **Re-ingest before trusting any current number.** The warehouse on this
+   machine holds data to 2026-09-06. Every series now fails freshness, so the
+   gate blocks all thirteen and the dashboard will refuse everything. Run
+   `python -m ingest.smard --weeks 8` and then the rest of the run order. The
+   evaluation is unaffected: its fixtures set gate state explicitly and do not
+   depend on the freshness of the source.
 
 ## Tone
 

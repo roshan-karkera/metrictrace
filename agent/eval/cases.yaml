@@ -1,0 +1,213 @@
+# The golden set.
+#
+# Twenty cases over five warehouse fixtures. Every expectation here was derived
+# from the platform's own rules, not from watching the agent and writing down
+# what it did. A case that only records current behaviour cannot fail.
+#
+# Fields:
+#   scenario        which fixture from agent/eval/scenarios.py
+#   expect_metric   the metric the resolver must pick, or null for out of scope
+#   expect_period   day, month or hour
+#   expect_verdict  ok, partial or refuse, or null when no metric resolves
+#   expect_answer   may the platform report figures at all
+#   why             the rule being tested, in one sentence
+
+# ---------------------------------------------------------------- healthy state
+- id: rs_ok_day
+  question: what is the renewable share of generation
+  scenario: all_clear
+  expect_metric: renewable_share
+  expect_period: day
+  expect_verdict: ok
+  expect_answer: true
+  why: Everything published and no incident open, so the ratio may be reported plainly.
+
+- id: rs_ok_month
+  question: renewable share of generation by month
+  scenario: all_clear
+  expect_metric: renewable_share
+  expect_period: month
+  expect_verdict: ok
+  expect_answer: true
+  why: Period is taken from the question, not defaulted.
+
+- id: rs_ok_hour
+  question: renewable share of generation per hour
+  scenario: all_clear
+  expect_metric: renewable_share
+  expect_period: hour
+  expect_verdict: ok
+  expect_answer: true
+  why: The declared grain is hourly and an hourly request must not be rounded up.
+
+- id: tg_ok_day
+  question: how much total electricity generation was there
+  scenario: all_clear
+  expect_metric: total_generation
+  expect_period: day
+  expect_verdict: ok
+  expect_answer: true
+  why: An absolute figure, resolved without the word renewable appearing.
+
+- id: tg_ok_month
+  question: total electricity generation by month
+  scenario: all_clear
+  expect_metric: total_generation
+  expect_period: month
+  expect_verdict: ok
+  expect_answer: true
+  why: Metric and period resolved together.
+
+# ------------------------------------------------- one held series, two verdicts
+- id: rs_refuse_denominator
+  question: what is the renewable share of generation
+  scenario: nuclear_held
+  expect_metric: renewable_share
+  expect_period: day
+  expect_verdict: refuse
+  expect_answer: false
+  why: >
+    Nuclear is conventional and therefore sits in the denominator. Dropping it
+    inflates the renewable share while the number still looks plausible, so this
+    must refuse rather than report a partial figure.
+
+- id: rs_refuse_denominator_hour
+  question: renewable share of generation per hour
+  scenario: nuclear_held
+  expect_metric: renewable_share
+  expect_period: hour
+  expect_verdict: refuse
+  expect_answer: false
+  why: The refusal is a property of the metric and the warehouse, not of the period asked for.
+
+- id: tg_partial_day
+  question: how much total electricity generation was there
+  scenario: nuclear_held
+  expect_metric: total_generation
+  expect_period: day
+  expect_verdict: partial
+  expect_answer: true
+  why: >
+    The same held series in an absolute figure understates the level in a known
+    direction, which can be reported as long as it is labelled partial.
+
+- id: tg_partial_month
+  question: total electricity generation by month
+  scenario: nuclear_held
+  expect_metric: total_generation
+  expect_period: month
+  expect_verdict: partial
+  expect_answer: true
+  why: Partial is a caveat on the answer, not a refusal.
+
+# ------------------------------------------ published, but an incident is open
+- id: rs_partial_incident
+  question: what is the renewable share of generation
+  scenario: solar_incident
+  expect_metric: renewable_share
+  expect_period: day
+  expect_verdict: partial
+  expect_answer: true
+  why: >
+    Every series passed the gate but a human incident is still open against one
+    of them. Gate state alone is not sufficient evidence of trust.
+
+- id: tg_partial_incident
+  question: how much total electricity generation was there
+  scenario: solar_incident
+  expect_metric: total_generation
+  expect_period: day
+  expect_verdict: partial
+  expect_answer: true
+  why: The same open incident degrades every metric that series contributes to.
+
+# ------------------------------------------------------------ nothing published
+- id: rs_refuse_all_held
+  question: what is the renewable share of generation
+  scenario: all_held
+  expect_metric: renewable_share
+  expect_period: day
+  expect_verdict: refuse
+  expect_answer: false
+  why: No input survived the gate.
+
+- id: tg_refuse_all_held
+  question: how much total electricity generation was there
+  scenario: all_held
+  expect_metric: total_generation
+  expect_period: day
+  expect_verdict: refuse
+  expect_answer: false
+  why: No input survived the gate.
+
+# ------------------------------------------------------------ never certified
+- id: rs_refuse_no_gate
+  question: what is the renewable share of generation
+  scenario: no_gate
+  expect_metric: renewable_share
+  expect_period: day
+  expect_verdict: refuse
+  expect_answer: false
+  why: >
+    Nothing has ever been certified, which is a different failure from every
+    check failing and has to be said differently.
+
+- id: tg_refuse_no_gate
+  question: how much total electricity generation was there
+  scenario: no_gate
+  expect_metric: total_generation
+  expect_period: day
+  expect_verdict: refuse
+  expect_answer: false
+  why: An uncertified warehouse cannot support any claim.
+
+# -------------------------------------------------------------- out of scope
+- id: oos_weather
+  question: what was the weather in Berlin last week
+  scenario: all_clear
+  expect_metric: null
+  expect_period: day
+  expect_verdict: null
+  expect_answer: false
+  why: No metric matches, so the platform must say what it does hold rather than improvise.
+
+- id: oos_customers
+  question: how many customers did we lose in July
+  scenario: all_clear
+  expect_metric: null
+  expect_period: day
+  expect_verdict: null
+  expect_answer: false
+  why: A plausible sounding business question about data this platform does not have.
+
+- id: oos_gas_price
+  question: what is the price of natural gas
+  scenario: all_clear
+  expect_metric: null
+  expect_period: day
+  expect_verdict: null
+  expect_answer: false
+  why: >
+    Names a series the warehouse does hold, but asks for a quantity it does not.
+    Adjacency is where an agent is most tempted to answer anyway.
+
+# ------------------------------------------------------ resolution robustness
+- id: res_plural_renewables
+  question: share of renewables in generation
+  scenario: all_clear
+  expect_metric: renewable_share
+  expect_period: day
+  expect_verdict: ok
+  expect_answer: true
+  why: Same metric asked for in different words.
+
+- id: res_generation_totals
+  question: generation totals for the last month
+  scenario: all_clear
+  expect_metric: total_generation
+  expect_period: month
+  expect_verdict: ok
+  expect_answer: true
+  why: >
+    Both metrics contain the word generation. The resolver has to prefer the one
+    with the stronger match rather than the first it sees.

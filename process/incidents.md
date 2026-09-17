@@ -68,3 +68,55 @@ between a correct answer and a confident lie.
 - **Still open:** no check yet asserts that a period contains the expected number
   of series. INC-003 was caught by eye on the first run of a new component, which
   is not a control. A completeness check at fact table level is the follow up.
+
+---
+
+## INC-016. Two different findings answering to the same incident number
+
+- **Opened:** 2026-09-17, by inspection after a gate run.
+- **Status:** closed.
+- **Detected by:** reading `select incident_id from incident` next to this file
+  and finding `INC-003` in both, describing different things.
+- **Cause:** `quality/gate.py` allocated identifiers as
+  `INC-{count(*) + 2}`. That is not an identifier, it is a row count wearing
+  one. It assumed the table is the only register of incidents and that nothing
+  is ever closed or removed. This file is the second register, written by hand
+  for findings no automated check could have raised, and it had already claimed
+  `INC-001` and `INC-003`.
+- **Effect:** the hand written INC-003, the undefined versus zero finding, and
+  an auto opened freshness incident on `biomass` shared a name. Any reference to
+  INC-003 in a commit message, runbook or agent answer became ambiguous.
+- **Resolution:** identifiers are now allocated from the high water mark across
+  both registers, by `next_incident_id` in `quality/gate.py`, and are never
+  reused. The twelve auto opened incidents that had collided were shifted up by
+  one so that INC-003 belongs to this file again.
+- **Note:** the underlying error is one an incident process is supposed to
+  prevent, which is why it is written up here rather than quietly patched. A
+  process that cannot name its own findings unambiguously is not yet a process.
+
+---
+
+## INC-017. A trust verdict the code could describe but never reach
+
+- **Opened:** 2026-09-17, while building `agent/eval`.
+- **Status:** closed.
+- **Detected by:** the `solar_incident` fixture, which publishes every series and
+  leaves one incident open. The expected verdict was `partial`. The platform
+  returned `ok` for both metrics.
+- **Cause:** `agent/trust.py` looked up open incidents with
+  `open_incidents(con, sorted(held))`, scoping the query to series the gate had
+  held. When nothing is held that list is empty, so no incident is ever found,
+  so the branch that degrades a verdict to `partial` because an incident is open
+  could not execute. The reason string for that branch, "All inputs published,
+  but an incident is still open against them", described a state the function
+  was structurally incapable of reporting.
+- **Effect:** a warehouse where every series passed the gate but a human had
+  raised and not yet closed an incident was reported as fully trustworthy. This
+  is the exact case the incident register exists for: a fault that the checks
+  cannot see and a person has recorded.
+- **Resolution:** incidents are now looked up for every contributing series
+  rather than only the held ones.
+- **Note:** the verdict logic had been read several times without this being
+  noticed, because reading code confirms what it says and not what it can reach.
+  It took a fixture that asserted an expected verdict to surface it, which is
+  the argument for the evaluation set existing at all.

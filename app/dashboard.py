@@ -27,7 +27,7 @@ import streamlit as st
 
 from semantic.engine import load_metrics, compute
 
-DB_PATH = ROOT / "data" / "warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 METRICS_FILE = ROOT / "semantic" / "metrics.yaml"
 
 

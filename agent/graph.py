@@ -35,7 +35,7 @@ from langgraph.graph import StateGraph, START, END
 from semantic.engine import load_metrics, compute
 from agent.trust import check, REFUSE, PARTIAL, OK
 
-DB_PATH = ROOT / "data" / "warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 METRICS_FILE = ROOT / "semantic" / "metrics.yaml"
 
 DEFAULT_MODEL = os.environ.get("METRICTRACE_MODEL", "openai/gpt-oss-120b")

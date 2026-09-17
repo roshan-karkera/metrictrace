@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 
 import duckdb
 
-DB_PATH = "data/warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 
 # Category drives every metric that aggregates across series. It lives in the
 # dimension, not in metric SQL, so a metric never has to hardcode a list of

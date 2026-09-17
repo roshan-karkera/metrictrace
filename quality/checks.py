@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 
 import duckdb
 
-DB_PATH = "data/warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 
 # --- thresholds, and why -----------------------------------------------------
 

@@ -25,7 +25,7 @@ from pathlib import Path
 import duckdb
 
 RAW_DIR = Path("data/raw")
-DB_PATH = Path("data/warehouse.db")
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 
 HOUR_MS = 3_600_000
 WEEK_MS = 7 * 24 * HOUR_MS

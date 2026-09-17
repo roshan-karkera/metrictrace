@@ -34,7 +34,7 @@ import duckdb
 sys.path.insert(0, ".")
 from semantic.engine import load_metrics   # noqa: E402
 
-DB_PATH = "data/warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 
 # Tables whose every column should be explainable. If a column here has no
 # inbound edge, the map is incomplete and the report says so.

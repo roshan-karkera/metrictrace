@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 import duckdb
 import yaml
 
-DB_PATH = "data/warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 METRICS_FILE = "semantic/metrics.yaml"
 
 REQUIRED = ("name", "label", "definition", "grain", "unit", "numerator",

@@ -24,11 +24,14 @@ from __future__ import annotations
 import sys
 from datetime import datetime, timezone
 
+import re
+from pathlib import Path
+
 import duckdb
 
 from quality.checks import run_all
 
-DB_PATH = "data/warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 
 DDL = """
 CREATE TABLE IF NOT EXISTS quality_log (
@@ -70,6 +73,35 @@ RUNBOOK_FOR = {
 }
 
 
+INCIDENT_LOG = Path(__file__).resolve().parents[1] / "process" / "incidents.md"
+
+
+def next_incident_id(con) -> str:
+    """
+    Allocate from the high water mark across BOTH incident registers.
+
+    The incident table is written by the gate. process/incidents.md is written
+    by a human for findings no check could have caught. They share one
+    identifier space, so an allocator that looks at only one of them will
+    eventually hand out an id that is already in use somewhere else. That is
+    exactly what happened in INC-016: this function previously counted rows in
+    the table, which collided with a hand written INC-003 and made two
+    different findings answer to the same name.
+
+    Ids are never reused, including after an incident is closed or deleted.
+    """
+    used = {r[0] for r in con.execute("select incident_id from incident").fetchall()}
+    if INCIDENT_LOG.exists():
+        used |= set(re.findall(r"INC-(?:\d{3})", INCIDENT_LOG.read_text(encoding="utf-8")))
+
+    highest = 0
+    for ident in used:
+        m = re.fullmatch(r"INC-(\d{3})", ident)
+        if m:
+            highest = max(highest, int(m.group(1)))
+    return f"INC-{highest + 1:03d}"
+
+
 def open_incident_if_new(con, run_at, series, check_name, summary) -> str | None:
     """One open incident per (series, check). A recurring failure is the same
     incident until somebody closes it, not a new one every morning."""
@@ -81,8 +113,7 @@ def open_incident_if_new(con, run_at, series, check_name, summary) -> str | None
     if existing:
         return None
 
-    n = con.execute("select count(*) from incident").fetchone()[0]
-    incident_id = f"INC-{n + 2:03d}"   # INC-001 is the manually written one
+    incident_id = next_incident_id(con)
     con.execute(
         "INSERT INTO incident VALUES (?,?,?,?,?,?,?,?)",
         [incident_id, run_at, None, series, check_name, summary,

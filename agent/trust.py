@@ -27,7 +27,7 @@ import duckdb
 
 from semantic.engine import load_metrics, Metric
 
-DB_PATH = ROOT / "data" / "warehouse.db"
+from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 METRICS_FILE = ROOT / "semantic" / "metrics.yaml"
 
 OK = "ok"
@@ -135,7 +135,12 @@ def check(con, metric: Metric) -> TrustReport:
     held = {s for s in inputs if decisions.get(s, "unknown") != "publish"}
     num_held = sorted(s for s in num if s in held)
     den_held = sorted(s for s in den if s in held)
-    incidents = open_incidents(con, sorted(held))
+    # Incidents are looked up for every contributing series, not only the held
+    # ones. Scoping this to `held` made the "published but an incident is still
+    # open" branch below unreachable: if nothing is held there are no incidents
+    # to find, so the verdict could never degrade on incident state alone. Found
+    # by agent/eval, which expected PARTIAL and got OK. See INC-017.
+    incidents = open_incidents(con, inputs)
 
     if held and held >= set(inputs):
         return TrustReport(metric.name, REFUSE,
