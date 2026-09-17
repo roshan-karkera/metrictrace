@@ -5,3 +5,5 @@ pyyaml
 streamlit
 plotly
 pytest
+langgraph
+mlflow
