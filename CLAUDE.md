@@ -53,6 +53,7 @@ Thirteen series, hourly, DE market area. Filter codes are in `ingest/smard.py`.
 | Dashboard | `app/dashboard.py` | Built. Trust panel above the numbers, definitions read live from `metrics.yaml`. |
 | Agent | `agent/` | Working. Five node graph, all three paths exercised. |
 | Completeness | `quality/completeness.py` | Working. Fact level, not per series. 63/63 days complete on 2026-09-19; proved it fails by deleting one series from three days. |
+| Contribution | `semantic/contribution.py` | Working. Exact for absolute figures, stated convention for ratios. Residual 1e-16 on the ratio path. Wired into the dashboard. |
 | Change mgmt | `process/change.py` | Working. Refuses approval when meaning changes without a version bump, proved on 2026-09-19. Impact analysis reads the lineage table. |
 | Tickets | `process/tickets.py` | Working. Priority set by a written rule, deduplicates against open incidents. TIC-001 correctly P3, TIC-002 P4. |
 | BPMN | `process/bpmn/` | Working. Incident and change processes, generated so diagram and code cannot drift. Opens in Camunda Modeler. |
@@ -71,6 +72,7 @@ Run order:
     python -m quality.completeness       # fact level, catches a whole series missing
     python -m agent.eval.run             # 20 case golden set, non zero exit on failure
 
+    python -m semantic.contribution total_generation 2026-09-05 2026-09-06
     python -m process.change status      # blocks a definition change without a version bump
     python -m process.change impact renewable_share
     python -m process.tickets new --metric ... --period ... --where ... --expected ... --saw ... --by ...
@@ -144,7 +146,10 @@ agent must check trust before attributing anything.
 14. **Ticket priority comes from the rule in `process/tickets.py`**, not from
     who reported it. A metric the platform already refuses cannot mislead
     anybody, so it is not a P1.
-15. **No em dashes anywhere in this repository.**
+15. **A ratio has no neutral decomposition.** `semantic/contribution.py`
+    states its convention next to the output rather than hiding it, and checks
+    that the parts sum to the whole instead of assuming it.
+16. **No em dashes anywhere in this repository.**
 
 ## Open items
 
@@ -159,12 +164,11 @@ agent must check trust before attributing anything.
 
 ## Next, in order
 
-1. **Contribution analysis in the dashboard.** Pick a metric and two periods, see
-   what drove the change. The lineage table and the semantic layer both exist now,
-   so this is assembly rather than design.
-2. **Airflow.** Still last, deliberately.
+1. **Airflow.** Still last, deliberately. The pipeline works as plain functions
+   and wrapping working functions in a scheduler is an hour. Debugging a broken
+   transform inside one is not.
 
-3. **Re-ingest before trusting any current number.** The warehouse on this
+2. **Re-ingest before trusting any current number.** The warehouse on this
    machine holds data to 2026-09-06. Every series now fails freshness, so the
    gate blocks all thirteen and the dashboard will refuse everything. Run
    `python -m ingest.smard --weeks 8` and then the rest of the run order. The

@@ -26,6 +26,7 @@ import pandas as pd
 import streamlit as st
 
 from semantic.engine import load_metrics, compute
+from semantic.contribution import decompose, CONVENTION
 
 from config import DB_PATH          # overridable via METRICTRACE_DB, see config.py
 METRICS_FILE = ROOT / "semantic" / "metrics.yaml"
@@ -205,6 +206,75 @@ if undefined:
     )
     with st.expander("Which periods are undefined"):
         st.write(df[df["value"].isna()].index.tolist())
+
+st.divider()
+
+# ---- what moved it --------------------------------------------------------
+#
+# Same filters as the headline number, because they come from the same
+# semantic layer. A contribution table that can disagree with the chart above
+# it is worse than no contribution table.
+
+st.subheader("What moved it")
+
+periods = [i for i, v in zip(df.index, df["value"]) if v is not None]
+if len(periods) < 2:
+    st.caption("Two defined periods are needed before a change can be attributed.")
+else:
+    ca, cb = st.columns(2)
+    with ca:
+        pa = st.selectbox("From", periods, index=max(0, len(periods) - 2),
+                          format_func=lambda x: str(x)[:19], key="pa")
+    with cb:
+        pb = st.selectbox("To", periods, index=len(periods) - 1,
+                          format_func=lambda x: str(x)[:19], key="pb")
+
+    if pa == pb:
+        st.caption("Pick two different periods.")
+    else:
+        d = decompose(con, m, str(pa)[:19], str(pb)[:19], period)
+
+        if not d.moves:
+            st.warning(d.note)
+        else:
+            fmt = (lambda v: "undefined" if v is None else
+                   (f"{v:.1%}" if m.unit == "ratio" else f"{v:,.0f}"))
+
+            k1, k2, k3 = st.columns(3)
+            k1.metric(str(pa)[:10], fmt(d.value_a))
+            k2.metric(str(pb)[:10], fmt(d.value_b))
+            k3.metric("Change", fmt(d.change))
+
+            if d.is_ratio:
+                st.markdown(
+                    f"**Numerator effect** {fmt(d.numerator_effect)}  |  "
+                    f"**Denominator effect** {fmt(d.denominator_effect)}"
+                )
+                st.info(
+                    "A ratio has no decomposition that is additive, symmetric "
+                    "and free of an arbitrary choice, so this one is stated "
+                    f"rather than hidden: {CONVENTION}. Reversing the order "
+                    "would attribute the interaction to the other side."
+                )
+
+            table = pd.DataFrame([{
+                "series": mv.series,
+                "category": mv.category,
+                "role": mv.role,
+                str(pa)[:10]: mv.value_a,
+                str(pb)[:10]: mv.value_b,
+                "effect on metric": mv.effect,
+                "share of change": mv.share,
+            } for mv in d.moves])
+            st.dataframe(table, use_container_width=True, hide_index=True)
+
+            st.bar_chart(table.set_index("series")["effect on metric"], height=260)
+            st.caption(
+                f"Residual after decomposition {d.residual:.2e}. The parts add "
+                "up to the whole, checked in code rather than assumed. Shares "
+                "can exceed 100 percent when movements cancel out, which is a "
+                "property of the data and not an error."
+            )
 
 st.divider()
 
