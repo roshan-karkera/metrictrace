@@ -94,6 +94,26 @@ CREATE TABLE lineage_edge (
 """
 
 
+# Everything that reads a metric definition. Without these the map stops at the
+# metric and a change to metrics.yaml appears to affect nothing, which is the
+# opposite of true: these are the surfaces that change when a definition changes.
+CONSUMERS: list[tuple[str, str]] = [
+    ("app/dashboard.py", "renders the number, its definition, owner and version"),
+    ("agent/graph.py",   "answers questions from it and cites the definition"),
+    ("agent/trust.py",   "resolves the contributing series to decide the verdict"),
+    ("agent/eval",       "golden set expectations are derived from the definition"),
+]
+
+
+def consumer_edges(con) -> list[tuple]:
+    """Derived from CONSUMERS for every metric that exists."""
+    edges = []
+    for name in load_metrics():
+        for node, how in CONSUMERS:
+            edges.append((f"metric:{name}", name, node, name, how))
+    return edges
+
+
 def metric_edges(con) -> list[tuple]:
     """Derived, not declared. A new metric appears here as soon as it exists."""
     edges = []
@@ -156,7 +176,7 @@ def build() -> None:
     con.executemany(
         "INSERT INTO lineage_edge VALUES (?,?,?,?,?,?,?)",
         [(*e, "declared", now) for e in DECLARED])
-    derived = metric_edges(con)
+    derived = metric_edges(con) + consumer_edges(con)
     con.executemany(
         "INSERT INTO lineage_edge VALUES (?,?,?,?,?,?,?)",
         [(*e, "derived", now) for e in derived])

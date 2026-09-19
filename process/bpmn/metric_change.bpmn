@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="defs_metric_change"
+                  targetNamespace="http://metrictrace/process">
+  <bpmn:process id="metric_change" name="MetricTrace metric definition change" isExecutable="false">
+    <bpmn:startEvent id="c_start" name="Change proposed to\nsemantic/metrics.yaml" />
+    <bpmn:task id="c_status" name="Run change status\ndiff against approved" />
+    <bpmn:exclusiveGateway id="c_bump" name="Version and\nlast_changed\nbumped?" />
+    <bpmn:task id="c_reject" name="Refuse.\nBump the version first" />
+    <bpmn:task id="c_impact" name="Run impact analysis\nthrough the lineage table" />
+    <bpmn:task id="c_review" name="Owner reviews\nwhat reads this metric" />
+    <bpmn:exclusiveGateway id="c_ok" name="Approved?" />
+    <bpmn:task id="c_record" name="Record approver,\nreason and impact" />
+    <bpmn:task id="c_log" name="Append entry to\nprocess/change_log.md" />
+    <bpmn:task id="c_notify" name="Notify owners of\nevery downstream surface" />
+    <bpmn:endEvent id="c_end" name="Definition in force" />
+    <bpmn:endEvent id="c_drop" name="Change withdrawn" />
+    <bpmn:sequenceFlow id="flow_1" sourceRef="c_start" targetRef="c_status" />
+    <bpmn:sequenceFlow id="flow_2" sourceRef="c_status" targetRef="c_bump" />
+    <bpmn:sequenceFlow id="flow_3" name="no" sourceRef="c_bump" targetRef="c_reject" />
+    <bpmn:sequenceFlow id="flow_4" name="yes" sourceRef="c_bump" targetRef="c_impact" />
+    <bpmn:sequenceFlow id="flow_5" name="resubmit" sourceRef="c_reject" targetRef="c_start" />
+    <bpmn:sequenceFlow id="flow_6" sourceRef="c_impact" targetRef="c_review" />
+    <bpmn:sequenceFlow id="flow_7" sourceRef="c_review" targetRef="c_ok" />
+    <bpmn:sequenceFlow id="flow_8" name="yes" sourceRef="c_ok" targetRef="c_record" />
+    <bpmn:sequenceFlow id="flow_9" name="no" sourceRef="c_ok" targetRef="c_drop" />
+    <bpmn:sequenceFlow id="flow_10" sourceRef="c_record" targetRef="c_log" />
+    <bpmn:sequenceFlow id="flow_11" sourceRef="c_log" targetRef="c_notify" />
+    <bpmn:sequenceFlow id="flow_12" sourceRef="c_notify" targetRef="c_end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="diagram_metric_change">
+    <bpmndi:BPMNPlane id="plane_metric_change" bpmnElement="metric_change">
+      <bpmndi:BPMNShape id="c_start_di" bpmnElement="c_start">
+        <dc:Bounds x="120" y="147" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_status_di" bpmnElement="c_status">
+        <dc:Bounds x="330" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_bump_di" bpmnElement="c_bump">
+        <dc:Bounds x="540" y="140" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_reject_di" bpmnElement="c_reject">
+        <dc:Bounds x="750" y="270" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_impact_di" bpmnElement="c_impact">
+        <dc:Bounds x="750" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_review_di" bpmnElement="c_review">
+        <dc:Bounds x="960" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_ok_di" bpmnElement="c_ok">
+        <dc:Bounds x="1170" y="140" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_record_di" bpmnElement="c_record">
+        <dc:Bounds x="1380" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_log_di" bpmnElement="c_log">
+        <dc:Bounds x="1590" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_notify_di" bpmnElement="c_notify">
+        <dc:Bounds x="1800" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_end_di" bpmnElement="c_end">
+        <dc:Bounds x="2010" y="147" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="c_drop_di" bpmnElement="c_drop">
+        <dc:Bounds x="1380" y="297" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_1_di" bpmnElement="flow_1">
+          <di:waypoint x="156" y="165" />
+          <di:waypoint x="330" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_2_di" bpmnElement="flow_2">
+          <di:waypoint x="480" y="165" />
+          <di:waypoint x="540" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_3_di" bpmnElement="flow_3">
+          <di:waypoint x="590" y="165" />
+          <di:waypoint x="750" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_4_di" bpmnElement="flow_4">
+          <di:waypoint x="590" y="165" />
+          <di:waypoint x="750" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_5_di" bpmnElement="flow_5">
+          <di:waypoint x="825" y="360" />
+          <di:waypoint x="825" y="410" />
+          <di:waypoint x="138" y="410" />
+          <di:waypoint x="138" y="183" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_6_di" bpmnElement="flow_6">
+          <di:waypoint x="900" y="165" />
+          <di:waypoint x="960" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_7_di" bpmnElement="flow_7">
+          <di:waypoint x="1110" y="165" />
+          <di:waypoint x="1170" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_8_di" bpmnElement="flow_8">
+          <di:waypoint x="1220" y="165" />
+          <di:waypoint x="1380" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_9_di" bpmnElement="flow_9">
+          <di:waypoint x="1220" y="165" />
+          <di:waypoint x="1380" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_10_di" bpmnElement="flow_10">
+          <di:waypoint x="1530" y="165" />
+          <di:waypoint x="1590" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_11_di" bpmnElement="flow_11">
+          <di:waypoint x="1740" y="165" />
+          <di:waypoint x="1800" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_12_di" bpmnElement="flow_12">
+          <di:waypoint x="1950" y="165" />
+          <di:waypoint x="2010" y="165" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

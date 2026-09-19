@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="defs_incident_management"
+                  targetNamespace="http://metrictrace/process">
+  <bpmn:process id="incident_management" name="MetricTrace incident management" isExecutable="false">
+    <bpmn:startEvent id="i_start" name="Quality check fails" />
+    <bpmn:task id="i_block" name="Block the series\nfacts are not republished" />
+    <bpmn:exclusiveGateway id="i_dupe" name="Incident already\nopen for this\nseries and check?" />
+    <bpmn:task id="i_open" name="Open incident\nattach the runbook" />
+    <bpmn:task id="i_note" name="Append to the\nexisting incident" />
+    <bpmn:exclusiveGateway id="i_known" name="Cause covered\nby a runbook?" />
+    <bpmn:task id="i_fix" name="Apply the runbook" />
+    <bpmn:task id="i_write" name="Investigate, then write\nthe runbook now" />
+    <bpmn:task id="i_rerun" name="Re-run gate\nand dimensional" />
+    <bpmn:exclusiveGateway id="i_pass" name="Series publishes?" />
+    <bpmn:task id="i_close" name="Close incident\nrecord the resolution" />
+    <bpmn:endEvent id="i_end" name="Series trusted again" />
+    <bpmn:sequenceFlow id="flow_1" sourceRef="i_start" targetRef="i_block" />
+    <bpmn:sequenceFlow id="flow_2" sourceRef="i_block" targetRef="i_dupe" />
+    <bpmn:sequenceFlow id="flow_3" name="no" sourceRef="i_dupe" targetRef="i_open" />
+    <bpmn:sequenceFlow id="flow_4" name="yes, one per series and check" sourceRef="i_dupe" targetRef="i_note" />
+    <bpmn:sequenceFlow id="flow_5" sourceRef="i_open" targetRef="i_known" />
+    <bpmn:sequenceFlow id="flow_6" sourceRef="i_note" targetRef="i_known" />
+    <bpmn:sequenceFlow id="flow_7" name="yes" sourceRef="i_known" targetRef="i_fix" />
+    <bpmn:sequenceFlow id="flow_8" name="no, runbook written now" sourceRef="i_known" targetRef="i_write" />
+    <bpmn:sequenceFlow id="flow_9" sourceRef="i_fix" targetRef="i_rerun" />
+    <bpmn:sequenceFlow id="flow_10" sourceRef="i_write" targetRef="i_rerun" />
+    <bpmn:sequenceFlow id="flow_11" sourceRef="i_rerun" targetRef="i_pass" />
+    <bpmn:sequenceFlow id="flow_12" name="yes" sourceRef="i_pass" targetRef="i_close" />
+    <bpmn:sequenceFlow id="flow_13" name="no" sourceRef="i_pass" targetRef="i_known" />
+    <bpmn:sequenceFlow id="flow_14" sourceRef="i_close" targetRef="i_end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="diagram_incident_management">
+    <bpmndi:BPMNPlane id="plane_incident_management" bpmnElement="incident_management">
+      <bpmndi:BPMNShape id="i_start_di" bpmnElement="i_start">
+        <dc:Bounds x="120" y="147" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_block_di" bpmnElement="i_block">
+        <dc:Bounds x="330" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_dupe_di" bpmnElement="i_dupe">
+        <dc:Bounds x="540" y="140" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_open_di" bpmnElement="i_open">
+        <dc:Bounds x="750" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_note_di" bpmnElement="i_note">
+        <dc:Bounds x="750" y="270" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_known_di" bpmnElement="i_known">
+        <dc:Bounds x="960" y="140" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_fix_di" bpmnElement="i_fix">
+        <dc:Bounds x="1170" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_write_di" bpmnElement="i_write">
+        <dc:Bounds x="1170" y="270" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_rerun_di" bpmnElement="i_rerun">
+        <dc:Bounds x="1380" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_pass_di" bpmnElement="i_pass">
+        <dc:Bounds x="1590" y="140" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_close_di" bpmnElement="i_close">
+        <dc:Bounds x="1800" y="120" width="150" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="i_end_di" bpmnElement="i_end">
+        <dc:Bounds x="2010" y="147" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_1_di" bpmnElement="flow_1">
+          <di:waypoint x="156" y="165" />
+          <di:waypoint x="330" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_2_di" bpmnElement="flow_2">
+          <di:waypoint x="480" y="165" />
+          <di:waypoint x="540" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_3_di" bpmnElement="flow_3">
+          <di:waypoint x="590" y="165" />
+          <di:waypoint x="750" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_4_di" bpmnElement="flow_4">
+          <di:waypoint x="590" y="165" />
+          <di:waypoint x="750" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_5_di" bpmnElement="flow_5">
+          <di:waypoint x="900" y="165" />
+          <di:waypoint x="960" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_6_di" bpmnElement="flow_6">
+          <di:waypoint x="900" y="315" />
+          <di:waypoint x="960" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_7_di" bpmnElement="flow_7">
+          <di:waypoint x="1010" y="165" />
+          <di:waypoint x="1170" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_8_di" bpmnElement="flow_8">
+          <di:waypoint x="1010" y="165" />
+          <di:waypoint x="1170" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_9_di" bpmnElement="flow_9">
+          <di:waypoint x="1320" y="165" />
+          <di:waypoint x="1380" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_10_di" bpmnElement="flow_10">
+          <di:waypoint x="1320" y="315" />
+          <di:waypoint x="1380" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_11_di" bpmnElement="flow_11">
+          <di:waypoint x="1530" y="165" />
+          <di:waypoint x="1590" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_12_di" bpmnElement="flow_12">
+          <di:waypoint x="1640" y="165" />
+          <di:waypoint x="1800" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_13_di" bpmnElement="flow_13">
+          <di:waypoint x="1615" y="190" />
+          <di:waypoint x="1615" y="240" />
+          <di:waypoint x="985" y="240" />
+          <di:waypoint x="985" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_14_di" bpmnElement="flow_14">
+          <di:waypoint x="1950" y="165" />
+          <di:waypoint x="2010" y="165" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

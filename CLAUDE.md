@@ -53,6 +53,9 @@ Thirteen series, hourly, DE market area. Filter codes are in `ingest/smard.py`.
 | Dashboard | `app/dashboard.py` | Built. Trust panel above the numbers, definitions read live from `metrics.yaml`. |
 | Agent | `agent/` | Working. Five node graph, all three paths exercised. |
 | Completeness | `quality/completeness.py` | Working. Fact level, not per series. 63/63 days complete on 2026-09-19; proved it fails by deleting one series from three days. |
+| Change mgmt | `process/change.py` | Working. Refuses approval when meaning changes without a version bump, proved on 2026-09-19. Impact analysis reads the lineage table. |
+| Tickets | `process/tickets.py` | Working. Priority set by a written rule, deduplicates against open incidents. TIC-001 correctly P3, TIC-002 P4. |
+| BPMN | `process/bpmn/` | Working. Incident and change processes, generated so diagram and code cannot drift. Opens in Camunda Modeler. |
 | Evaluation | `agent/eval/` | Working. 20 cases over 5 warehouse fixtures. 20/20 on 2026-09-17, unsafe answer rate 0. Logged to MLflow. |
 | Orchestration | `orchestration/dags/` | **Empty on purpose. Airflow comes last.** |
 
@@ -67,6 +70,11 @@ Run order:
     python -m agent.graph "how much electricity was generated per day"
     python -m quality.completeness       # fact level, catches a whole series missing
     python -m agent.eval.run             # 20 case golden set, non zero exit on failure
+
+    python -m process.change status      # blocks a definition change without a version bump
+    python -m process.change impact renewable_share
+    python -m process.tickets new --metric ... --period ... --where ... --expected ... --saw ... --by ...
+    python process/bpmn/generate.py      # regenerate both BPMN models
 
 ## The finding that defines the project
 
@@ -129,7 +137,14 @@ agent must check trust before attributing anything.
     one.** A series absent from inside its own recorded lifespan makes every
     aggregate over that period understated while still looking plausible.
     `quality/completeness.py` has no tolerance band for this on purpose.
-13. **No em dashes anywhere in this repository.**
+13. **A metric definition may not change without a version bump.** `version`
+    and `last_changed` are printed next to the number by the dashboard and
+    cited by the agent. `process/change.py` refuses approval otherwise, and it
+    refuses in code rather than in a guideline.
+14. **Ticket priority comes from the rule in `process/tickets.py`**, not from
+    who reported it. A metric the platform already refuses cannot mislead
+    anybody, so it is not a P1.
+15. **No em dashes anywhere in this repository.**
 
 ## Open items
 
@@ -144,16 +159,12 @@ agent must check trust before attributing anything.
 
 ## Next, in order
 
-1. **Process pillar software.** Ticket intake with a written triage rule. Change
-   management for metric definitions that runs impact analysis through the
-   lineage table before a change is allowed. BPMN models of the incident and
-   change processes in Camunda Modeler.
-2. **Contribution analysis in the dashboard.** Pick a metric and two periods, see
+1. **Contribution analysis in the dashboard.** Pick a metric and two periods, see
    what drove the change. The lineage table and the semantic layer both exist now,
    so this is assembly rather than design.
-3. **Airflow.** Still last, deliberately.
+2. **Airflow.** Still last, deliberately.
 
-4. **Re-ingest before trusting any current number.** The warehouse on this
+3. **Re-ingest before trusting any current number.** The warehouse on this
    machine holds data to 2026-09-06. Every series now fails freshness, so the
    gate blocks all thirteen and the dashboard will refuse everything. Run
    `python -m ingest.smard --weeks 8` and then the rest of the run order. The
