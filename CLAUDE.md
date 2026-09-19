@@ -50,7 +50,7 @@ Thirteen series, hourly, DE market area. Filter codes are in `ingest/smard.py`.
 | Dimensional | `models/dimensional.py` | Working. 16,296 fact rows, grain ok, nuclear HELD. |
 | Semantic | `semantic/metrics.yaml`, `engine.py` | Working. Ratio and absolute paths both run. INC-003 fixed here on 2026-09-13. |
 | Lineage | `models/lineage.py` | Working. 36 edges, 14 nodes, verify clean. Build with `python -m models.lineage` and no arguments. |
-| Dashboard | `app/dashboard.py` | Built. Trust panel above the numbers, definitions read live from `metrics.yaml`. |
+| Dashboard | `app/dashboard.py`, `app/views/` | Working. Seven pages behind `st.navigation`, one question each. Trust state is the landing page and the sidebar everywhere else. Every page has a render test. |
 | Agent | `agent/` | Working. Five node graph, all three paths exercised. |
 | Completeness | `quality/completeness.py` | Working. Fact level, not per series. 63/63 days complete on 2026-09-19; proved it fails by deleting one series from three days. |
 | Contribution | `semantic/contribution.py` | Working. Exact for absolute figures, stated convention for ratios. Residual 1e-16 on the ratio path. Wired into the dashboard. |
@@ -154,7 +154,15 @@ agent must check trust before attributing anything.
     states its convention next to the output rather than hiding it, and checks
     that the parts sum to the whole instead of assuming it.
 16. **No em dashes anywhere in this repository.**
-17. **An exit code is not a health verdict.** `gate()` returns non zero whenever
+17. **The page folder is `app/views`, never `app/pages`.** A folder called
+    `pages` beside the entrypoint triggers Streamlit's automatic multipage
+    discovery, which builds a second navigation from the file names, runs each
+    script standalone and ignores `st.navigation` entirely.
+18. **Colour is never the only channel, and the exception gets the colour.**
+    Status colours mean a state and are never reused as a series. A passing
+    check is a tint, not saturated green, so the one failure is handed to the
+    reader instead of hunted for. Every status chip carries an icon and a word.
+19. **An exit code is not a health verdict.** `gate()` returns non zero whenever
     any series is blocked, which is right for a person at a terminal and wrong
     for a scheduler, since it cannot tell an expected block from the feed
     disappearing. The DAG reads the gate's own decision table and applies

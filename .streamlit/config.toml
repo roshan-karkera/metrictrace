@@ -1,0 +1,17 @@
+# The app is built and checked against these surfaces. The chart colours in
+# app/theme.py are validated against them, so changing one without the other
+# puts the marks on a surface nobody checked.
+#
+# backgroundColor is plain white rather than the near white the palette
+# suggests: Streamlit blends a custom background with its own base and an
+# off white came out noticeably olive on screen.
+[theme]
+base = "light"
+primaryColor = "#2a78d6"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f4f2"
+textColor = "#0b0b0b"
+font = "sans serif"
+
+[server]
+headless = true
