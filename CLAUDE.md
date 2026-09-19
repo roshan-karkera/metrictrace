@@ -58,7 +58,7 @@ Thirteen series, hourly, DE market area. Filter codes are in `ingest/smard.py`.
 | Tickets | `process/tickets.py` | Working. Priority set by a written rule, deduplicates against open incidents. TIC-001 correctly P3, TIC-002 P4. |
 | BPMN | `process/bpmn/` | Working. Incident and change processes, generated so diagram and code cannot drift. Opens in Camunda Modeler. |
 | Evaluation | `agent/eval/` | Working. 20 cases over 5 warehouse fixtures. 20/20 on 2026-09-17, unsafe answer rate 0. Logged to MLflow. |
-| Orchestration | `orchestration/dags/` | **Empty on purpose. Airflow comes last.** |
+| Orchestration | `orchestration/dags/` | Working. One DAG, seven tasks, parsed under Airflow 2.10.5. The gate task judges blast radius rather than the exit code. Not yet run under a live scheduler. |
 
 Run order:
 
@@ -77,6 +77,10 @@ Run order:
     python -m process.change impact renewable_share
     python -m process.tickets new --metric ... --period ... --where ... --expected ... --saw ... --by ...
     python process/bpmn/generate.py      # regenerate both BPMN models
+
+The same order, declared as edges, is in `orchestration/dags/metrictrace_daily.py`.
+Airflow is not in `requirements.txt` and nothing in the pipeline imports it, so the
+run order above still works with the scheduler uninstalled.
 
 ## The finding that defines the project
 
@@ -150,6 +154,12 @@ agent must check trust before attributing anything.
     states its convention next to the output rather than hiding it, and checks
     that the parts sum to the whole instead of assuming it.
 16. **No em dashes anywhere in this repository.**
+17. **An exit code is not a health verdict.** `gate()` returns non zero whenever
+    any series is blocked, which is right for a person at a terminal and wrong
+    for a scheduler, since it cannot tell an expected block from the feed
+    disappearing. The DAG reads the gate's own decision table and applies
+    `MAX_BLOCKED_FRACTION`. Anything else would be red every night over
+    `nuclear`, and a light that is always on is not read.
 
 ## Open items
 
@@ -158,17 +168,13 @@ agent must check trust before attributing anything.
   print a unit until it is. Ratios are unaffected since the unit cancels.
   Blocking for `total_generation`, not for `renewable_share`.
 - **Restatement policy.** Needs ADR 0003 the first time SMARD restates a week.
-- **Airflow.** Deliberately last. The pipeline works as plain functions; wrapping
-  working functions in a scheduler later is an hour. Debugging a broken transform
-  inside a scheduler is not.
+- **A live scheduler run.** The DAG parses and both decision carrying task
+  bodies were exercised against this warehouse, but no run has gone end to end
+  under a real scheduler and executor. Do not claim otherwise.
 
 ## Next, in order
 
-1. **Airflow.** Still last, deliberately. The pipeline works as plain functions
-   and wrapping working functions in a scheduler is an hour. Debugging a broken
-   transform inside one is not.
-
-2. **Re-ingest before trusting any current number.** The warehouse on this
+1. **Re-ingest before trusting any current number.** The warehouse on this
    machine holds data to 2026-09-06. Every series now fails freshness, so the
    gate blocks all thirteen and the dashboard will refuse everything. Run
    `python -m ingest.smard --weeks 8` and then the rest of the run order. The

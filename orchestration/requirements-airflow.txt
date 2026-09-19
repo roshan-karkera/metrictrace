@@ -1,0 +1,15 @@
+# Airflow is kept out of requirements.txt on purpose.
+#
+# Nothing in the pipeline imports it. The run order in CLAUDE.md works from a
+# terminal with none of this installed, which is how every stage was debugged
+# and how it should stay. Installing a scheduler should be a decision, not a
+# side effect of installing the project.
+#
+# Airflow pins its own dependency tree, so it needs its constraints file:
+#
+#   pip install -r orchestration/requirements-airflow.txt \
+#     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.11.txt"
+#
+# Change the 3.11 in that URL to the Python version you are actually on.
+
+apache-airflow==2.10.5

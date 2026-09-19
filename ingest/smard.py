@@ -20,6 +20,12 @@ from pathlib import Path
 import duckdb
 import requests
 
+# Paths come from config.py (convention 11). They used to be relative to the
+# working directory, which was invisible for as long as the only caller was a
+# terminal sitting in the repository root. Airflow runs workers from somewhere
+# else, and this module would have quietly landed a second warehouse there.
+from config import DB_PATH, RAW_DIR
+
 BASE = "https://www.smard.de/app/chart_data"
 REGION = "DE"
 RESOLUTION = "hour"
@@ -41,9 +47,6 @@ FILTERS = {
     "4070": "pumped_storage",
     "4071": "natural_gas",
 }
-RAW_DIR = Path("data/raw")
-DB_PATH = Path("data/warehouse.db")
-
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": "MetricTrace/0.1 (portfolio project)"})
 
