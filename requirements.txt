@@ -1,4 +1,5 @@
 requests
+python-dotenv
 duckdb
 pandas
 pyyaml
@@ -7,3 +8,14 @@ plotly
 pytest
 langgraph
 mlflow
+
+# The agent's composing step calls a model through this client. It is imported
+# inside the function rather than at module load, so everything else in the
+# project runs without it and the agent degrades to evidence without prose
+# instead of failing. That is deliberate, but it is not a reason to leave the
+# dependency undeclared, which is how it went missing until the dashboard
+# printed "No module named 'groq'" on screen.
+#
+# Needs GROQ_API_KEY in the environment. Without the key the same graceful
+# path is taken.
+groq
