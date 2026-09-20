@@ -73,19 +73,69 @@ refusal behaviour.
 
 ## Running it
 
-    pip install -r orchestration/requirements-airflow.txt \
-      --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.11.txt"
+**Not on native Windows.** Airflow needs POSIX process handling; use WSL2 or
+Docker. The install may succeed on Windows and then fail at run time, which is
+worse than failing at install.
 
+The constraints URL carries both the Airflow version and your Python version,
+and it is the usual first stumble: Airflow 2.x published no constraints file
+for Python 3.13, so a 2.10.5 URL returns 404 on a 3.13 interpreter.
+
+    pip install -r orchestration/requirements-airflow.txt \
+      --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.13.txt"
+
+    export AIRFLOW_HOME=$(pwd)/.airflow
     export AIRFLOW__CORE__DAGS_FOLDER=$(pwd)/orchestration/dags
     export AIRFLOW__CORE__LOAD_EXAMPLES=False
+    airflow db migrate
+    airflow dags reserialize          # Airflow 3 serves the DAG list from the database
+
+One run, in one process, with the traceback in front of you, which is the right
+first run and needs no scheduler or webserver:
+
+    airflow dags test metrictrace_daily
+
+Then, if you want the scheduler and the UI:
+
     airflow standalone
+
+The DAG imports `PythonOperator` from the standard provider on Airflow 3 and
+falls back to the old path on Airflow 2, because the only thing it needs from
+Airflow is an operator that calls a Python function, and that has not changed.
+
+## What the first real run found
+
+It was run under Airflow 3.3.2 against a copy of the warehouse whose `data/raw`
+was missing, so ingestion landed nothing and the cleaned layer came out empty.
+The DAG reported the pipeline **healthy**: "12 published, 1 blocked, 8 percent".
+
+That was a bug in this file, not in the pipeline. `task_gate` asked for the
+newest run in `gate_decision`, which is not the same question as "what did the
+run I just started decide". A gate run that records no decisions at all leaves
+the previous run as the newest, so the health check read yesterday's verdict and
+passed. The one check written specifically to stop a green light over a broken
+warehouse was the thing producing it.
+
+The task now records the time before calling `gate()` and refuses anything older
+than that. The same run then failed where it should, and said so:
+
+    the gate recorded no decisions for this run. The newest rows in
+    gate_decision predate it, so there is nothing to judge and nothing
+    downstream may run. The usual cause is an empty cleaned layer, which
+    means the failure is upstream of the gate.
+
+`build_facts`, `build_lineage` and `completeness` were correctly left unrun,
+which is the dependency chain doing its job. `golden_set` ran anyway, which is
+the independence it was given on purpose.
 
 ## What has been verified, and what has not
 
-Verified: the file parses under Airflow 2.10.5 into seven tasks with the
-intended edges and no cycle, and both decision carrying task bodies were
-exercised against this warehouse. `quality_gate` failed with 13 of 13 blocked,
-which is correct today. `completeness` passed, 63 of 63 days complete.
+Verified: the DAG serializes under Airflow 3.3.2 with no import errors, the
+scheduler computes its next run, `airflow dags test` executes the tasks in the
+declared order, the gate's staleness and blast radius rules both fire, and a
+failed upstream task stops everything that depends on it.
 
-Not verified: a full scheduled run under a live scheduler and executor. Say that
-rather than implying otherwise.
+Not verified: a run on a complete warehouse under a live scheduler and executor.
+The verification above ran against a copy with no raw data, so ingestion and the
+stages after the gate have not been exercised this way. Say that rather than
+implying otherwise.

@@ -20,8 +20,13 @@ morning:
      "did this command exit zero". Those are different questions, and the gate
      is where they come apart. See MAX_BLOCKED_FRACTION below.
 
-Install:
+Install, and run it somewhere POSIX:
     pip install -r orchestration/requirements-airflow.txt
+
+Airflow does not run on native Windows. The scheduler and executor rely on
+POSIX process handling, so a Windows machine needs WSL2 or Docker. Installing
+the package on Windows may succeed and then fail at run time, which is worse
+than failing at install.
 
 Point Airflow at this folder:
     export AIRFLOW__CORE__DAGS_FOLDER=<repo>/orchestration/dags
@@ -40,7 +45,15 @@ from pathlib import Path
 
 from airflow import DAG
 from airflow.exceptions import AirflowFailException
-from airflow.operators.python import PythonOperator
+
+# PythonOperator moved into the standard provider in Airflow 3. Both spellings
+# are accepted here rather than pinning the project to one major version,
+# because the only thing this file needs from Airflow is an operator that calls
+# a Python function, and that has not changed.
+try:
+    from airflow.providers.standard.operators.python import PythonOperator   # Airflow 3
+except ImportError:                                                          # Airflow 2
+    from airflow.operators.python import PythonOperator
 
 # The DAGs folder is not the repository root and Airflow does not put it on the
 # path. Every module resolves its own paths through config.py, which anchors on
@@ -97,16 +110,37 @@ def task_gate(**_) -> None:
     the source feed disappearing. So the decision is taken from the gate's own
     table instead of from its return value.
     """
+    from datetime import datetime, timezone
+
     import duckdb
 
     from config import DB_PATH
     from quality.gate import gate
 
+    # Remember when this run began, so the check below can prove it is reading
+    # the decisions this run produced and not an older set. Reading the newest
+    # run in the table is not the same question, and the difference is not
+    # theoretical: a gate run that records no decisions at all leaves the
+    # previous run as the newest, and a health check that reads it declares the
+    # pipeline healthy on the strength of yesterday's verdict. That is how this
+    # task reported "12 published, 1 blocked, 8 percent" against an empty
+    # warehouse, which is the exact failure it exists to prevent.
+    started_at = datetime.now(timezone.utc)
+
     gate()   # writes quality_log and gate_decision, opens incidents
 
     con = duckdb.connect(str(DB_PATH))
     try:
-        run_id = con.execute("SELECT max(run_id) FROM gate_decision").fetchone()[0]
+        row = con.execute(
+            "SELECT run_id, max(run_at) FROM gate_decision "
+            "GROUP BY run_id ORDER BY 2 DESC LIMIT 1").fetchone()
+        if row is None or row[1] is None or row[1] < started_at.replace(tzinfo=None):
+            raise AirflowFailException(
+                "the gate recorded no decisions for this run. The newest rows in "
+                "gate_decision predate it, so there is nothing to judge and "
+                "nothing downstream may run. The usual cause is an empty cleaned "
+                "layer, which means the failure is upstream of the gate.")
+        run_id = row[0]
         rows = con.execute(
             "SELECT decision, count(*) FROM gate_decision "
             "WHERE run_id = ? GROUP BY decision", [run_id]).fetchall()
@@ -120,12 +154,6 @@ def task_gate(**_) -> None:
     counts = dict(rows)
     total = sum(counts.values())
     blocked = counts.get("block", 0)
-
-    if total == 0:
-        raise AirflowFailException(
-            "the gate recorded no decisions at all. Either the checks did not "
-            "run or the cleaned layer is empty. Nothing downstream may run on "
-            "this.")
 
     fraction = blocked / total
     print(f"gate run {run_id}: {total - blocked} published, {blocked} blocked "

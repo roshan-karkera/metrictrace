@@ -5,11 +5,23 @@
 # and how it should stay. Installing a scheduler should be a decision, not a
 # side effect of installing the project.
 #
-# Airflow pins its own dependency tree, so it needs its constraints file:
+# Airflow pins its own dependency tree, so it needs its constraints file, and
+# the constraints URL carries both the Airflow version and your Python version:
 #
 #   pip install -r orchestration/requirements-airflow.txt \
-#     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.11.txt"
+#     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.13.txt"
 #
-# Change the 3.11 in that URL to the Python version you are actually on.
+# Change 3.13 to the Python you are on. Airflow 2.x published no constraints
+# file for Python 3.13 at all, which is why the 2.10.5 URL returns 404 there.
+#
+# Two things that bite before the DAG ever runs:
+#
+#   Airflow does not run on native Windows. It needs POSIX process handling, so
+#   use WSL2 or Docker. pip install may well succeed on Windows and then fail at
+#   run time.
+#
+#   A full scheduler is not required to prove the pipeline. `airflow dags test
+#   metrictrace_daily 2026-09-20` executes every task once, in one process, with
+#   the traceback in front of you. That is the right first run.
 
-apache-airflow==2.10.5
+apache-airflow==3.3.2

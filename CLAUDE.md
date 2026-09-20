@@ -58,7 +58,7 @@ Thirteen series, hourly, DE market area. Filter codes are in `ingest/smard.py`.
 | Tickets | `process/tickets.py` | Working. Priority set by a written rule, deduplicates against open incidents. TIC-001 correctly P3, TIC-002 P4. |
 | BPMN | `process/bpmn/` | Working. Incident and change processes, generated so diagram and code cannot drift. Opens in Camunda Modeler. |
 | Evaluation | `agent/eval/` | Working. 20 cases over 5 warehouse fixtures. 20/20 on 2026-09-17, unsafe answer rate 0. Logged to MLflow. |
-| Orchestration | `orchestration/dags/` | Working. One DAG, seven tasks, parsed under Airflow 2.10.5. The gate task judges blast radius rather than the exit code. Not yet run under a live scheduler. |
+| Orchestration | `orchestration/dags/` | Working. One DAG, seven tasks, executed under Airflow 3.3.2 with `airflow dags test`. The gate task judges blast radius and run freshness rather than the exit code. Not yet run on a complete warehouse under a live scheduler. |
 
 Run order:
 
@@ -176,9 +176,11 @@ agent must check trust before attributing anything.
   print a unit until it is. Ratios are unaffected since the unit cancels.
   Blocking for `total_generation`, not for `renewable_share`.
 - **Restatement policy.** Needs ADR 0003 the first time SMARD restates a week.
-- **A live scheduler run.** The DAG parses and both decision carrying task
-  bodies were exercised against this warehouse, but no run has gone end to end
-  under a real scheduler and executor. Do not claim otherwise.
+- **A live scheduler run on a complete warehouse.** The DAG has been executed
+  task by task with `airflow dags test` under Airflow 3.3.2, which is a real
+  run, but it ran against a copy with no raw data, so ingestion and everything
+  after the gate are still unexercised that way. Do not claim otherwise.
+  Airflow does not run on native Windows: use WSL2 or Docker.
 
 ## Next, in order
 
