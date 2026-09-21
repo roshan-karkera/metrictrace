@@ -44,7 +44,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="MetricTrace",
-    page_icon="//",
+    page_icon=":material/monitoring:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -53,6 +53,38 @@ from app import data, theme   # noqa: E402
 
 theme.install()
 
+# The logo sits above the page navigation, which Streamlit always renders at
+# the top of the sidebar regardless of where st.logo is called from in the
+# script. Two files, not one, because an externally referenced SVG is a static
+# image: it cannot pick up the page's text colour, so light and dark mode each
+# get their own wordmark instead of one that goes illegible in the other.
+ASSETS = ROOT / "app" / "assets"
+st.logo(str(ASSETS / f"logo_{theme.mode()}.svg"),
+        size="large",          # the wordmark is the app name, so it should read as one
+        icon_image=str(ASSETS / "icon.svg"))
+
+# --------------------------------------------------------------------------
+# one list drives both the navigation and the sidebar guide below, so the
+# question a page answers can never drift from the page it names.
+# --------------------------------------------------------------------------
+
+PAGES = [
+    ("views/overview.py",   "Overview",             ":material/dashboard:",
+     "Can I believe anything here right now."),
+    ("views/metric.py",     "Metric",                ":material/show_chart:",
+     "What is this number, and who decided what it means."),
+    ("views/what_moved.py", "What moved it",         ":material/compare_arrows:",
+     "Why did it change, and how much of the change was what."),
+    ("views/quality.py",    "Data quality",          ":material/verified:",
+     "What did the checks find, and what is held."),
+    ("views/incidents.py",  "Incidents and change",  ":material/report:",
+     "What is broken, who owns it, what changes when it is fixed."),
+    ("views/lineage.py",    "Lineage",               ":material/account_tree:",
+     "If I change this definition, what breaks."),
+    ("views/ask.py",        "Ask",                   ":material/chat:",
+     "The same questions in a sentence, answered or refused."),
+]
+
 # --------------------------------------------------------------------------
 # the trust summary, pinned to the sidebar so no page can be read without it
 # --------------------------------------------------------------------------
@@ -60,23 +92,22 @@ theme.install()
 state = data.platform_state()
 
 with st.sidebar:
-    st.markdown("### MetricTrace")
     st.caption("A number, its definition, and the state of the data behind it.")
     short = {"good": "healthy", "warning": f"{state['blocked']} series held",
              "serious": f"{state['partial_days']} partial day(s)",
              "critical": "not publishable"}[state["level"]]
     theme.chips([(short, state["level"])])
     st.caption(f"Last gate run {state['last_run']}")
+
+    # Open by default. It is the map of the app, and a reader who does not
+    # know the app yet is exactly the one who will not think to click it.
+    with st.expander("What each page answers", icon=":material/help:", expanded=True):
+        for _, title, icon, question in PAGES:
+            st.markdown(f"{icon} **{title}**  \n:gray[{question}]")
+
     st.divider()
 
-pages = [
-    st.Page("views/overview.py",     title="Overview",     icon=":material/dashboard:",     default=True),
-    st.Page("views/metric.py",       title="Metric",       icon=":material/show_chart:"),
-    st.Page("views/what_moved.py",   title="What moved it", icon=":material/compare_arrows:"),
-    st.Page("views/quality.py",      title="Data quality", icon=":material/verified:"),
-    st.Page("views/incidents.py",    title="Incidents and change", icon=":material/report:"),
-    st.Page("views/lineage.py",      title="Lineage",      icon=":material/account_tree:"),
-    st.Page("views/ask.py",          title="Ask",          icon=":material/chat:"),
-]
+pages = [st.Page(path, title=title, icon=icon, default=(path == "views/overview.py"))
+         for path, title, icon, _ in PAGES]
 
 st.navigation(pages).run()

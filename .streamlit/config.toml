@@ -1,17 +1,46 @@
 # The app is built and checked against these surfaces. The chart colours in
-# app/theme.py are validated against them, so changing one without the other
-# puts the marks on a surface nobody checked.
+# app/theme.py mirror LIGHT and DARK here exactly, so changing one without the
+# other puts the marks on a surface nobody checked.
+#
+# Both [theme.light] and [theme.dark] are defined, not just [theme], because a
+# file with only [theme] locks the app to one mode and hides the mode switch
+# in the app menu. app/theme.py already carries a full DARK palette; without
+# both sections here it was unreachable dead code.
 #
 # backgroundColor is plain white rather than the near white the palette
 # suggests: Streamlit blends a custom background with its own base and an
 # off white came out noticeably olive on screen.
 [theme]
 base = "light"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
+baseFontSize = 15
+baseRadius = "medium"
+showWidgetBorder = true
+showSidebarBorder = true
+linkUnderline = false
+
+[theme.light]
 primaryColor = "#2a78d6"
 backgroundColor = "#ffffff"
 secondaryBackgroundColor = "#f4f4f2"
 textColor = "#0b0b0b"
-font = "sans serif"
+borderColor = "#e1e0d9"
+greenColor = "#0ca30c"
+orangeColor = "#fab219"
+redColor = "#d03b3b"
+chartCategoricalColors = ["#2a78d6", "#eb6834", "#1baf7a"]
+
+[theme.dark]
+primaryColor = "#3987e5"
+backgroundColor = "#1a1a19"
+secondaryBackgroundColor = "#0d0d0d"
+textColor = "#ffffff"
+borderColor = "#2c2c2a"
+greenColor = "#0ca30c"
+orangeColor = "#fab219"
+redColor = "#e66767"
+chartCategoricalColors = ["#3987e5", "#d95926", "#199e70"]
 
 [server]
 headless = true

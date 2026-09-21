@@ -26,8 +26,19 @@ theme.install()
 c = theme.C()
 state = data.platform_state()
 
-st.title("Overview")
+st.title("Overview", icon=":material/dashboard:")
 st.caption("The state of the data, before any number that depends on it.")
+
+theme.hero(
+    "A number moved, the platform tells you why, cites the query behind every "
+    "claim, and if the load was incomplete that week it opens an incident "
+    "instead of inventing a business reason.",
+    ["Lineage: what depends on what",
+     "Metric definitions: what a number means",
+     "Incidents: what is known to be wrong"],
+)
+st.caption("New here? Read the verdict below first, then use the sidebar guide. "
+           "This is a portfolio project with no real users.")
 
 # --------------------------------------------------------------------------
 # the verdict, in words, with the colour as the secondary channel
@@ -203,8 +214,3 @@ else:
         a.markdown(theme.chip(r["stage"], r["verdict"]), unsafe_allow_html=True)
         b.markdown(f'<span class="mt-kv">{r["when"]}</span>', unsafe_allow_html=True)
         d.markdown(f'<span class="mt-kv">{r["result"]}</span>', unsafe_allow_html=True)
-
-theme.note(
-    "This is a portfolio project. It has no real users and nothing depends on it. "
-    "Saying so plainly is stronger than implying otherwise."
-)
