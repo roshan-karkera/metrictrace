@@ -42,8 +42,31 @@ import yaml
 from agent.eval import scenarios
 
 CASES_FILE = Path(__file__).with_name("cases.yaml")
-MLFLOW_DB = ROOT / "agent" / "eval" / "mlflow.db"
-MLFLOW_ARTIFACTS = ROOT / "agent" / "eval" / "mlartifacts"
+# Where MLflow keeps its tracking database and its artifacts.
+#
+# Beside the eval by default, which is right on Windows and on native Linux.
+# It is overridable because of one environment where the default does not work:
+# WSL writing to a Windows drive through /mnt/c. MLflow finishes an artifact
+# with shutil.copystat, which calls utime, and utime on that mount fails with
+# "Operation not permitted" unless the drive was mounted with metadata enabled.
+# The artifact is already written at that point, so the failure is pure
+# bookkeeping, but it still kills the run.
+#
+# Set METRICTRACE_MLFLOW_HOME to somewhere on the Linux filesystem and the
+# problem goes away. Nothing here is source: both paths are gitignored scratch.
+MLFLOW_HOME = Path(os.environ.get("METRICTRACE_MLFLOW_HOME")
+                   or ROOT / "agent" / "eval")
+MLFLOW_DB = MLFLOW_HOME / "mlflow.db"
+MLFLOW_ARTIFACTS = MLFLOW_HOME / "mlartifacts"
+EXPERIMENT = "metrictrace-agent"
+
+
+def _short(path: Path) -> str:
+    """Repo relative when it is inside the repo, absolute when it is not."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 # --------------------------------------------------------------------------
@@ -51,6 +74,22 @@ MLFLOW_ARTIFACTS = ROOT / "agent" / "eval" / "mlartifacts"
 # --------------------------------------------------------------------------
 
 NUMBER = re.compile(r"-?\d[\d,]*(?:\.\d+)?%?")
+
+# A language model does not type ASCII. It writes dates with a non breaking
+# hyphen and separates a figure from its unit with a narrow no break space, and
+# both are invisible in a terminal. The date pattern below is written with a
+# plain hyphen, so without this the pattern quietly matched nothing and every
+# date component was reported as an invented number. Normalise first, match
+# second. Characters are written as escapes rather than literals to keep
+# convention 16 true of this file.
+TYPOGRAPHY = str.maketrans({
+    "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-",
+    "\u2014": "-", "\u2212": "-",                       # dashes and minus
+    "\u00a0": " ", "\u2009": " ", "\u202f": " ",       # non breaking spaces
+})
+
+MONTHS = ("January|February|March|April|May|June|July|"
+          "August|September|October|November|December")
 
 
 def _norm(token: str) -> str:
@@ -79,10 +118,30 @@ def allowed_numbers(stats: dict | None, period: str) -> set[str]:
 def grounding_violations(prose: str, stats: dict | None, period: str) -> list[str]:
     """Numeric tokens in the prose that were not among the computed figures.
 
-    Incident identifiers and four digit years are stripped first: they are
-    labels, not claims about a quantity.
+    Labels are stripped first, because they are names rather than claims about
+    a quantity: incident identifiers, dates, clock times and bare years.
+
+    Dates have to be removed whole. Stripping only the year out of
+    "2026-09-13 00:00" leaves "09", "13", "00" and "00" behind, and the check
+    then reports four invented numbers in a sentence that invented nothing.
+    That is how this check produced sixteen violations the moment the composer
+    started writing real prose and naming the period it was describing, which
+    it is handed in stats["first"] and stats["last"] and is supposed to say.
+
+    A false positive here is worse than a miss. The whole point of the measure
+    is that a violation means the agent made a number up, so a check that cries
+    wolf over a timestamp makes the number unreadable.
     """
-    text = re.sub(r"INC-\d+", " ", prose)
+    text = prose.translate(TYPOGRAPHY)
+    text = re.sub(r"INC-\d+", " ", text)
+    # dates written out, "July 1 2026" and "1 July 2026"
+    text = re.sub(rf"\b(?:{MONTHS})\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}", " ", text)
+    text = re.sub(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+(?:{MONTHS}),?\s+\d{{4}}", " ", text)
+    # ISO dates, with or without a time after them
+    text = re.sub(r"\b\d{4}-\d{1,2}-\d{1,2}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?", " ", text)
+    # clock times on their own
+    text = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b", " ", text)
+    # bare years
     text = re.sub(r"\b(?:19|20)\d{2}\b", " ", text)
     allowed = allowed_numbers(stats, period)
     return [t for t in NUMBER.findall(text) if _norm(t) not in allowed]
@@ -247,11 +306,30 @@ def main() -> int:
         MLFLOW_ARTIFACTS.mkdir(parents=True, exist_ok=True)
         mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB}")
         client = mlflow.tracking.MlflowClient()
-        if client.get_experiment_by_name("metrictrace-agent") is None:
+
+        # An experiment's artifact location is fixed when it is created and
+        # MLflow will not change it afterwards. A tracking database that has
+        # moved between machines, or between a Windows checkout and the same
+        # folder seen from WSL, therefore keeps pointing at a path that does
+        # not exist here, and every run dies at log_artifact with a permission
+        # error naming a directory from the other filesystem.
+        #
+        # Renaming the stale experiment out of the way is the recovery: the old
+        # runs stay readable under their new name, and this one starts a fresh
+        # experiment whose artifacts land where they belong.
+        exp = client.get_experiment_by_name(EXPERIMENT)
+        if exp is not None and exp.artifact_location != MLFLOW_ARTIFACTS.as_uri():
+            stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+            client.rename_experiment(exp.experiment_id, f"{EXPERIMENT}-stale-{stamp}")
+            print(f"note     the tracking database was created elsewhere "
+                  f"(artifacts at {exp.artifact_location}). "
+                  f"Renamed that experiment to {EXPERIMENT}-stale-{stamp} "
+                  f"and started a new one.")
+            exp = None
+        if exp is None:
             client.create_experiment(
-                "metrictrace-agent",
-                artifact_location=MLFLOW_ARTIFACTS.as_uri())
-        mlflow.set_experiment("metrictrace-agent")
+                EXPERIMENT, artifact_location=MLFLOW_ARTIFACTS.as_uri())
+        mlflow.set_experiment(EXPERIMENT)
         with mlflow.start_run():
             mlflow.log_params({
                 "composer": composer,
@@ -262,10 +340,10 @@ def main() -> int:
             mlflow.log_metrics({k: v for k, v in summary.items()})
             mlflow.log_artifact(str(out))
             mlflow.log_artifact(str(CASES_FILE))
-        print(f"logged   mlflow experiment metrictrace-agent in "
-              f"{MLFLOW_DB.relative_to(ROOT)}")
+        print(f"logged   mlflow experiment {EXPERIMENT} in "
+              f"{_short(MLFLOW_DB)}")
         print("         view with: mlflow ui --backend-store-uri "
-              f"sqlite:///{MLFLOW_DB.relative_to(ROOT)}")
+              f"sqlite:///{MLFLOW_DB}")
 
     return 1 if failed else 0
 

@@ -8,9 +8,9 @@
     "refusal_recall": 1.0,
     "refusal_precision": 1.0,
     "unsafe_answer_rate": 0.0,
-    "grounding_violations": 12,
-    "mean_latency_s": 0.828,
-    "p95_latency_s": 1.592
+    "grounding_violations": 0,
+    "mean_latency_s": 0.887,
+    "p95_latency_s": 1.708
   },
   "composer": "model",
   "results": [
@@ -32,8 +32,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 2.24,
-      "answer": "The renewable share of generation is currently 85.5\u202fpercent. Over the observed day\u2011long period the average was 67.8\u202fpercent, with values ranging from a low of 45.7\u202fpercent to a high of 85.5\u202fpercent. Seven periods were undefined. All data are fully trusted.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 12:23:30.310585\n  undefined periods: 7 (zero or absent denominator, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.45,
+      "answer": "The latest renewable share of generation is 85.5\u202f%. Over the period the average was 67.8\u202f%, with a minimum of 45.7\u202f% and a maximum of 85.5\u202f%. Seven periods were undefined. All data are fully trusted.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 16:51:49.921531\n  undefined periods: 7 (zero or absent denominator, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=renewable_share, period=day",
         "trust: ok (All contributing series passed the most recent gate and no incident is open against them.)",
@@ -60,8 +60,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 1.476,
-      "answer": "For the three months from July\u202f1\u202f2026 to September\u202f1\u202f2026 the renewable share of generation was 67.2\u202f% in the most recent month, with an average of 68.2\u202f% across the period, a minimum of 67.2\u202f% and a maximum of 68.7\u202f%. No periods were undefined.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 12:23:30.310585\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.405,
+      "answer": "For the three months from July\u202f1\u202f2026 to September\u202f1\u202f2026 the renewable share of generation was 67.2\u202f% in the most recent month, with an average of 68.2\u202f% across the period, a minimum of 67.2\u202f% and a maximum of 68.7\u202f%. No periods were undefined.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 16:51:49.921531\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=renewable_share, period=month",
         "trust: ok (All contributing series passed the most recent gate and no incident is open against them.)",
@@ -87,18 +87,9 @@
       "answered": true,
       "answer_ok": true,
       "unsafe": false,
-      "violations": [
-        "07",
-        "06",
-        "00",
-        "00",
-        "09",
-        "20",
-        "23",
-        "00,"
-      ],
-      "latency_s": 1.428,
-      "answer": "Over the period from 2026\u201107\u201106\u202f00:00 to 2026\u201109\u201120\u202f23:00, the renewable share of generation per hour was 75.7\u202f% in the latest hour, with an average of 63.9\u202f%, a minimum of 19.4\u202f% and a maximum of 93.4\u202f%. There were 168 undefined periods in the series.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 12:23:30.310585\n  undefined periods: 168 (zero or absent denominator, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "violations": [],
+      "latency_s": 1.708,
+      "answer": "The renewable share of generation per hour for the DE market area from 2026\u201107\u201106 00:00 to 2026\u201109\u201120 23:00 has a latest value of 75.7\u202f%, a mean of 63.9\u202f%, a minimum of 19.4\u202f% and a maximum of 93.4\u202f%, with 168 undefined periods. The trust verdict is ok, meaning all contributing series passed the most recent gate and no incident is open against them.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 16:51:49.921531\n  undefined periods: 168 (zero or absent denominator, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=renewable_share, period=hour",
         "trust: ok (All contributing series passed the most recent gate and no incident is open against them.)",
@@ -125,8 +116,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 1.592,
-      "answer": "The most recent total electricity generation reported was 1,201,990 (unit as defined in the documentation). The average over the 77\u2011day period was 1,167,182, with a minimum of 895,586 and a maximum of 1,475,914. All contributing series passed the latest gate and no incidents are open against them, so the trust level is \u201cok\u201d. Seven periods within the range are undefined.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 12:23:30.310585\n  undefined periods: 7 (no contributing series in that period, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.803,
+      "answer": "The most recent total electricity generation recorded was 1,201,990 (unit as defined in the documentation). Over the 77\u2011day period the average generation was 1,167,182, with values ranging from a minimum of 895,586 to a maximum of 1,475,914. Seven periods in the dataset are undefined. All figures are trusted as \u201cok\u201d according to the provided verdict.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 16:51:49.921531\n  undefined periods: 7 (no contributing series in that period, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=total_generation, period=day",
         "trust: ok (All contributing series passed the most recent gate and no incident is open against them.)",
@@ -152,12 +143,9 @@
       "answered": true,
       "answer_ok": true,
       "unsafe": false,
-      "violations": [
-        "1",
-        "1"
-      ],
-      "latency_s": 1.576,
-      "answer": "The total electricity generation for the three months from July\u202f1\u202f2026 to September\u202f1\u202f2026 has a mean of\u202f27,234,241, with the latest month at\u202f24,124,124, the minimum month at\u202f22,366,917 and the maximum month at\u202f35,211,683. All contributing series passed the most recent gate and have no open incidents, so the figures are fully trusted.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 12:23:30.310585\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "violations": [],
+      "latency_s": 1.607,
+      "answer": "The total electricity generation for the three months from July\u202f1\u202f2026 to September\u202f1\u202f2026 ranged between 22,366,917 and 35,211,683, with an average of 27,234,241. The most recent month recorded a generation of 24,124,124. All contributing series passed the latest gate and no incidents are open, so the trust level is \u201cok.\u201d No periods are undefined.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 16:51:49.921531\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=total_generation, period=month",
         "trust: ok (All contributing series passed the most recent gate and no incident is open against them.)",
@@ -184,7 +172,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.06,
+      "latency_s": 0.051,
       "answer": "I will not answer that with the current data.\n\nReason: Part of the denominator is held, so this ratio would be biased in a predictable direction while still looking plausible.\nHeld series in the denominator: nuclear\nOpen incident INC-901: nuclear failed freshness. Runbook: process/runbooks/stale_source.md\n\nClose the incident or publish the series and ask again.",
       "trace": [
         "resolve: metric=renewable_share, period=day",
@@ -210,7 +198,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.051,
+      "latency_s": 0.055,
       "answer": "I will not answer that with the current data.\n\nReason: Part of the denominator is held, so this ratio would be biased in a predictable direction while still looking plausible.\nHeld series in the denominator: nuclear\nOpen incident INC-901: nuclear failed freshness. Runbook: process/runbooks/stale_source.md\n\nClose the incident or publish the series and ask again.",
       "trace": [
         "resolve: metric=renewable_share, period=hour",
@@ -236,8 +224,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 1.147,
-      "answer": "The latest total electricity generation recorded was 1,201,990 (units as defined in the documentation). This figure is reported as partial because the calculation omitted one or more contributing series, making the level understated. Additionally, seven periods in the dataset are undefined, which also contributes to the partial trust verdict.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 12:23:30.310585\n  undefined periods: 7 (no contributing series in that period, not zero)\n  open incident INC-901: nuclear / freshness\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.532,
+      "answer": "The total electricity generation reported for the most recent hour is 1,201,990 (unit not verified). This figure is partial because it was computed without one or more contributing series, so it understates the true total. Additionally, seven periods in the dataset are undefined, which further limits completeness. Use this number with caution.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 16:51:49.921531\n  undefined periods: 7 (no contributing series in that period, not zero)\n  open incident INC-901: nuclear / freshness\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=total_generation, period=day",
         "trust: partial (Computed without one or more contributing series. The level is understated and must be reported as partial.)",
@@ -263,12 +251,9 @@
       "answered": true,
       "answer_ok": true,
       "unsafe": false,
-      "violations": [
-        "1",
-        "1"
-      ],
-      "latency_s": 1.508,
-      "answer": "For the three months from July\u202f1\u202f2026 to September\u202f1\u202f2026 the total electricity generation values are: latest month\u202f24,124,124, mean\u202f27,234,241, minimum\u202f22,366,917 and maximum\u202f35,211,683 (units are unverified). This figure is reported as partial because it was computed without one or more contributing series, so it likely understates the true generation.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 12:23:30.310585\n  open incident INC-901: nuclear / freshness\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "violations": [],
+      "latency_s": 1.659,
+      "answer": "For the three months from July\u202f1\u202f2026 to September\u202f1\u202f2026 the total electricity generation values are: latest 24,124,124, mean 27,234,241, minimum 22,366,917 and maximum 35,211,683. The figure is reported as partial because the computation omitted one or more contributing series, resulting in an understated level.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 16:51:49.921531\n  open incident INC-901: nuclear / freshness\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=total_generation, period=month",
         "trust: partial (Computed without one or more contributing series. The level is understated and must be reported as partial.)",
@@ -295,8 +280,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 1.269,
-      "answer": "The latest renewable share of generation is 85.5\u202f%. The mean share over the period is 67.8\u202f%, with a minimum of 45.7\u202f% and a maximum of 85.5\u202f%. This figure is only partially trusted because an incident is still open against the underlying inputs.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 12:23:30.310585\n  undefined periods: 7 (zero or absent denominator, not zero)\n  open incident INC-901: solar / row_count\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.562,
+      "answer": "The renewable share of generation is 85.5% for the latest period, with a mean of 67.8%, a minimum of 45.7% and a maximum of 85.5% over the day. This figure is marked as partial because an incident is still open against the published inputs.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 16:51:49.921531\n  undefined periods: 7 (zero or absent denominator, not zero)\n  open incident INC-901: solar / row_count\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=renewable_share, period=day",
         "trust: partial (All inputs published, but an incident is still open against them.)",
@@ -323,8 +308,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 1.353,
-      "answer": "The total electricity generation reported for the period was 1,201,990 (latest value). This figure is considered partial because, although all inputs have been published, an incident is still open against them.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 12:23:30.310585\n  undefined periods: 7 (no contributing series in that period, not zero)\n  open incident INC-901: solar / row_count\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.507,
+      "answer": "The latest reported total electricity generation was 1,201,990 (unit not verified). This figure is only partially trusted because, although all inputs are published, an incident is still open against them. The data cover 77 hourly periods from 2026\u201107\u201106 to 2026\u201109\u201120, with seven periods undefined. The mean over the period was 1,167,182, with a minimum of 895,586 and a maximum of 1,475,914.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: partial, gate run 2026-09-21 16:51:49.921531\n  undefined periods: 7 (no contributing series in that period, not zero)\n  open incident INC-901: solar / row_count\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=total_generation, period=day",
         "trust: partial (All inputs published, but an incident is still open against them.)",
@@ -351,7 +336,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.051,
+      "latency_s": 0.057,
       "answer": "I will not answer that with the current data.\n\nReason: Every series behind this metric is held by the gate.\nHeld series in the denominator: biomass, brown_coal, hard_coal, hydro, natural_gas, nuclear, other_conventional, other_renewable, solar, wind_offshore, wind_onshore\nHeld series in the numerator: biomass, hydro, other_renewable, solar, wind_offshore, wind_onshore\n\nClose the incident or publish the series and ask again.",
       "trace": [
         "resolve: metric=renewable_share, period=day",
@@ -377,7 +362,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.048,
+      "latency_s": 0.063,
       "answer": "I will not answer that with the current data.\n\nReason: Every series behind this metric is held by the gate.\nHeld series in the numerator: biomass, brown_coal, hard_coal, hydro, natural_gas, nuclear, other_conventional, other_renewable, solar, wind_offshore, wind_onshore\n\nClose the incident or publish the series and ask again.",
       "trace": [
         "resolve: metric=total_generation, period=day",
@@ -403,7 +388,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.042,
+      "latency_s": 0.046,
       "answer": "I will not answer that with the current data.\n\nReason: No gate run on record. Nothing in the warehouse has been certified, so no number from it can be defended.\n\nClose the incident or publish the series and ask again.",
       "trace": [
         "resolve: metric=renewable_share, period=day",
@@ -429,7 +414,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.042,
+      "latency_s": 0.051,
       "answer": "I will not answer that with the current data.\n\nReason: No gate run on record. Nothing in the warehouse has been certified, so no number from it can be defended.\n\nClose the incident or publish the series and ask again.",
       "trace": [
         "resolve: metric=total_generation, period=day",
@@ -455,7 +440,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.018,
+      "latency_s": 0.023,
       "answer": "I do not have a metric that matches that question. Known metrics: renewable_share, total_generation.",
       "trace": [
         "resolve: no matching metric, stopping",
@@ -480,7 +465,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.019,
+      "latency_s": 0.025,
       "answer": "I do not have a metric that matches that question. Known metrics: renewable_share, total_generation.",
       "trace": [
         "resolve: no matching metric, stopping",
@@ -505,7 +490,7 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 0.018,
+      "latency_s": 0.023,
       "answer": "I do not have a metric that matches that question. Known metrics: renewable_share, total_generation.",
       "trace": [
         "resolve: no matching metric, stopping",
@@ -530,8 +515,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 1.316,
-      "answer": "The renewable share of generation was 85.5\u202f% in the most recent hour, with a mean of 67.8\u202f%, a minimum of 45.7\u202f% and a maximum of 85.5\u202f% over the period. There were 7 undefined periods. The trust verdict is ok, indicating the figures are reliable.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 12:23:30.310585\n  undefined periods: 7 (zero or absent denominator, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.621,
+      "answer": "The renewable share of generation was 85.5\u202f% in the most recent hour, with a mean of 67.8\u202f%, a minimum of 45.7\u202f% and a maximum of 85.5\u202f% over the period. There were 7 undefined periods in the data. The trust verdict is ok, indicating the figures are reliable.\n\nEvidence:\n  definition: Share of total electricity generation in the DE market area produced by renewable sources, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 16:51:49.921531\n  undefined periods: 7 (zero or absent denominator, not zero)\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=renewable_share, period=day",
         "trust: ok (All contributing series passed the most recent gate and no incident is open against them.)",
@@ -558,8 +543,8 @@
       "answer_ok": true,
       "unsafe": false,
       "violations": [],
-      "latency_s": 1.313,
-      "answer": "The total electricity generation for the most recent month was 24,124,124 (unit as defined in the metric). The trust verdict is \u201cok,\u201d meaning all contributing series passed the latest gate and no incidents are open.\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 12:23:30.310585\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
+      "latency_s": 1.492,
+      "answer": "The total electricity generation for the most recent month was 24,124,124 (unit as defined in the metric documentation).\n\nEvidence:\n  definition: Sum of all generating series in the DE market area, per hour.\n  owner: Roshan Mohan Karkera, version 1, last changed 2026-09-07\n  trust: ok, gate run 2026-09-21 16:51:49.921531\n  upstream: cleaned_series, dim_region, dim_series, dimensional.py, gate_decision",
       "trace": [
         "resolve: metric=total_generation, period=month",
         "trust: ok (All contributing series passed the most recent gate and no incident is open against them.)",

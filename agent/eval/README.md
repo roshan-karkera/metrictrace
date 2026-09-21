@@ -80,3 +80,27 @@ require. Derive the expectation from `agent/trust.py` and `semantic/metrics.yaml
 rather than from running the agent and writing down what came back. A case that
 only records current behaviour cannot fail, and a case that cannot fail is not a
 test.
+
+## Running it from WSL against a Windows checkout
+
+MLflow finishes writing an artifact with `shutil.copystat`, which calls `utime`.
+On a Windows drive seen through `/mnt/c` that call fails with "Operation not
+permitted" unless the drive was mounted with metadata enabled, and the run dies
+even though the artifact itself was written.
+
+Point MLflow at the Linux filesystem instead:
+
+    export METRICTRACE_MLFLOW_HOME=~/metrictrace-mlflow
+    python -m agent.eval.run
+
+Nothing is lost by moving it. The tracking database and the artifacts are
+gitignored scratch, not source.
+
+The alternative, which fixes the whole class of permission problem rather than
+this one symptom, is to enable metadata on the mount. In `/etc/wsl.conf`:
+
+    [automount]
+    options = "metadata,umask=22,fmask=11"
+
+then `wsl --shutdown` from PowerShell and reopen Ubuntu. That also silences
+Airflow's warning about the permissions on `airflow.cfg`.

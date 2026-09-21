@@ -162,7 +162,16 @@ agent must check trust before attributing anything.
     Status colours mean a state and are never reused as a series. A passing
     check is a tint, not saturated green, so the one failure is handed to the
     reader instead of hunted for. Every status chip carries an icon and a word.
-19. **An exit code is not a health verdict.** `gate()` returns non zero whenever
+19. **A false positive in the grounding check is worse than a miss.** The
+    measure only means anything if a violation means the agent invented a
+    number, so the check strips labels (incident ids, dates, clock times,
+    years) whole before it looks. Stripping only the year out of a timestamp
+    left its other digits behind and reported four invented numbers in a
+    sentence that invented nothing. Normalise typography before matching: the
+    model writes dates with a non breaking hyphen and separates a figure from
+    its unit with a narrow no break space, both invisible in a terminal, and a
+    pattern written with a plain hyphen silently matches none of them.
+20. **An exit code is not a health verdict.** `gate()` returns non zero whenever
     any series is blocked, which is right for a person at a terminal and wrong
     for a scheduler, since it cannot tell an expected block from the feed
     disappearing. The DAG reads the gate's own decision table and applies
