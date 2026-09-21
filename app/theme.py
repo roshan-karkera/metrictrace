@@ -188,6 +188,21 @@ _CSS = """
   }
 
   /* the app's own pieces */
+  /* Streamlit floats a chart's toolbar ABOVE the element's top edge. On a chart
+     that sits directly under a row of cards, the toolbar lands inside those
+     cards, and they win: the click goes to the card, not the button. So
+     "Show data" opens the table and "Show chart" cannot be clicked to get back.
+
+     Raising the toolbar's z-index does not fix it, because each card makes its
+     own stacking context and the toolbar cannot climb out of its parent's.
+     Moving the toolbar inside the element it belongs to does fix it, and was
+     the only one of four candidates that survived a hit test. It sits over the
+     top right of the chart or the table header, where its own background keeps
+     it legible. */
+  [data-testid="stElementToolbar"] {
+      top: 0.25rem !important; right: 0.25rem !important; z-index: 60;
+  }
+
   .mt-chip {
       display: inline-block; padding: 1px 9px; margin: 0 4px 4px 0;
       border-radius: 999px; font-size: 0.78rem; font-weight: 600;
