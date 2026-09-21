@@ -40,7 +40,28 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))   # pages run in this process, so this covers them all
 
+import logging
+
 import streamlit as st
+
+
+class _ClosedTabNoise(logging.Filter):
+    """
+    Drops one message and nothing else. On Windows, Python's asyncio logs a
+    ConnectionResetError (WinError 10054) whenever a browser tab is closed or
+    refreshed, which prints a traceback in the terminal that looks like a crash
+    and is not one. Anything that is not that exact error still gets through.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        exc = record.exc_info[1] if record.exc_info else None
+        return not (isinstance(exc, ConnectionResetError)
+                    and "_call_connection_lost" in record.getMessage())
+
+
+_asyncio_log = logging.getLogger("asyncio")
+if not any(isinstance(f, _ClosedTabNoise) for f in _asyncio_log.filters):
+    _asyncio_log.addFilter(_ClosedTabNoise())   # the script reruns, so add it once
 
 st.set_page_config(
     page_title="MetricTrace",
